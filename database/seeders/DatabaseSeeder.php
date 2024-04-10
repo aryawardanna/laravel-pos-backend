@@ -17,9 +17,15 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'tes@gmail.com',
             'password' => Hash::make('123'),
             'role' => 'admin',
         ]);
+
+        $this->call([
+            CategorySeeder::class,
+            ProductSeeder::class,
+        ]);
+
     }
 }
