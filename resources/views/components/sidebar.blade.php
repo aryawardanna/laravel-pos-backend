@@ -7,28 +7,23 @@
             <a href="index.html">St</a>
         </div>
         <ul class="sidebar-menu">
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link has-dropdown"><i class="fas fa-fire"></i><span>Dashboard</span></a>
-                <ul class="dropdown-menu">
-                    <li class='{{ Request::is('dashboard-general-dashboard') ? 'active' : '' }}'>
-                        <a class="nav-link" href="{{ url('dashboard-general-dashboard') }}">General Dashboard</a>
-                    </li>
-                </ul>
-                <ul class="dropdown-menu">
-                    <li class="">
-                        <a class="nav-link" href="{{ route('user.index') }}">Users</a>
-                    </li>
-                </ul>
-                <ul class="dropdown-menu">
-                    <li class="">
-                        <a class="nav-link" href="{{ route('products.index') }}">Products</a>
-                    </li>
-                </ul>
-                <ul class="dropdown-menu">
-                    <li class="">
-                        <a class="nav-link" href="{{ route('categories.index') }}">Categories</a>
-                    </li>
-                </ul>
+
+            <li class="{{ Request::is('products') ? 'active' : '' }} nav-item ">
+                <a class="nav-link" href="{{ route('products.index') }}">
+                    <i class="fa fa-truck" aria-hidden="true"></i><span>Products</span>
+                </a>
+            </li>
+
+            <li class="{{ Request::is('categories') ? 'active' : '' }} nav-item ">
+                <a class="nav-link" href="{{ route('categories.index') }}">
+                    <i class="fa fa-calendar"></i><span>Categories</span>
+                </a>
+            </li>
+
+            <li class="nav-item {{ Request::is('user') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('user.index') }}">
+                    <i class="fas fa-users"></i><span>Users</span>
+                </a>
             </li>
         </ul>
     </aside>

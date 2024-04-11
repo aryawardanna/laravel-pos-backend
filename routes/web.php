@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('home');
 
     Route::resource('user', UserController::class);
+    Route::get('products/json', [ProductController::class, 'json'])->name('products.json');
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);
 });

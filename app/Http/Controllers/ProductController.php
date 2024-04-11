@@ -5,18 +5,56 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use DataTables;
 
 class ProductController extends Controller
 {
+    public function index()
+    {
+        return view('pages.products.index');
+    }
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function json()
     {
-        // show all products
-        $products = Product::with('category')->paginate(10);
-        return view('pages.products.index', compact('products'));
+        // // show all products
+        // $products = Product::with('category')->paginate(10);
+
+
+        $data = Product::with('category')->get();
+		$dt = Datatables::of($data)
+		->addColumn('nama', function($row){
+			return $row->name;
+        })
+		->addColumn('category', function($row){
+			if(!empty($row->category)){
+				return $row->category->name;
+			}else{
+				return "-";
+			}
+        })
+		->addColumn('price', function($row){
+			return 'Rp. '.number_format($row->price,2,',','.');
+        })
+		->addColumn('status', function($row){
+			return $row->status;
+        })
+		->addColumn('aksi', function($row){
+			return '
+			<span data-toggle="tooltip" title="Edit">
+			<a href="'.route('products.edit', $row->id).'" class="btn btn-flat btn-sm btn-primary" > <i class="fa fa-pencil"></i></a></span>
+
+			<span data-toggle="tooltip" title="Hapus"><a href="javascript:void(0)" data-id="'.$row->id.'" data-toggle="modal" data-target="#delItem"  class="btn btn-flat btn-danger btn-sm mr-1"><i class="fa fa-trash"></i></a></span>
+		';
+		})
+        ->rawColumns(['category','aksi'])
+        ->addIndexColumn()
+        ->make();
+		echo json_encode($dt->original);
     }
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -72,7 +110,7 @@ class ProductController extends Controller
     public function show(string $id)
     {
         // show product
-        return view('pages.products.show');
+        // return view('pages.products.show');
     }
 
     /**
