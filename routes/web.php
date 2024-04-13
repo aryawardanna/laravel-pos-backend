@@ -25,8 +25,12 @@ Route::middleware(['auth'])->group(function () {
         return view('pages.dashboard');
     })->name('home');
 
+    Route::get('user/json', [UserController::class, 'json'])->name('user.json');
     Route::resource('user', UserController::class);
+
     Route::get('products/json', [ProductController::class, 'json'])->name('products.json');
     Route::resource('products', ProductController::class);
+
+    Route::get('categories/json', [CategoryController::class, 'json'])->name('categories.json');
     Route::resource('categories', CategoryController::class);
 });

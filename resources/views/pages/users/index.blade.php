@@ -5,13 +5,62 @@
 @push('style')
     <!-- CSS Libraries -->
     <link rel="stylesheet" href="{{ asset('library/selectric/public/selectric.css') }}">
+    <link href="{{ url('library/datatables.net-bs/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    <link href="{{ url('library/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url('library/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('library/izitoast/dist/css/iziToast.min.css') }}">
 @endpush
 
 @section('main')
+    <style>
+        #dttable_paginate {
+            float: right;
+        }
+
+        #dttable_filter {
+            float: right;
+        }
+
+        #dttable_length {
+            float: left;
+        }
+
+        /* Styling for pagination buttons */
+        .dataTables_paginate.paging_simple_numbers.pull-right .paginate_button {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 0 2px;
+            background-color: #ccc;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Styling for current page button */
+        .dataTables_paginate.paging_simple_numbers.pull-right .paginate_button.current {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        /* Styling for disabled button */
+        .dataTables_paginate.paging_simple_numbers.pull-right .paginate_button.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Styling for previous and next buttons */
+        .dataTables_paginate.paging_simple_numbers.pull-right .paginate_button.previous,
+        .dataTables_paginate.paging_simple_numbers.pull-right .paginate_button.next {
+            font-weight: bold;
+        }
+    </style>
     <div class="main-content">
         <section class="section">
             <div class="section-header">
-                <h1>Users</h1>
+                <h1 class="section-title">Users</h1>
                 <div class="section-header-button">
                     <a href="{{ route('user.create') }}" class="btn btn-primary">Add New</a>
                 </div>
@@ -22,94 +71,37 @@
                 </div>
             </div>
             <div class="section-body">
-                <div class="row">
-                    <div class="col-12">
-                        @include('layouts.alert')
-                    </div>
-                </div>
-                <h2 class="section-title">Users</h2>
-                <p class="section-lead">
-                    You can manage all Users, such as editing, deleting and more.
-                </p>
-
-
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
-                                <h4>All Posts</h4>
-                            </div>
+
                             <div class="card-body">
-                                <div class="float-left">
-                                    <select class="form-control selectric">
-                                        <option>Action For Selected</option>
-                                        <option>Move to Draft</option>
-                                        <option>Move to Pending</option>
-                                        <option>Delete Pemanently</option>
-                                    </select>
-                                </div>
-                                <div class="float-right">
-                                    <form method="GET" action="{{ route('user.index') }}">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Search" name="name">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-primary"><i class="fas fa-search"></i></button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <div class="clearfix mb-3"></div>
-
-                                <div class="table-responsive">
-                                    <table class="table-striped table">
-                                        <tr>
-
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Created At</th>
-                                            <th>Action</th>
+                                <table id="dttable"
+                                    class="table display nowrap table-sm table-striped row-border cell-border hover order-column dt-responsive compact"
+                                    cellspacing="0" cellpadding="0">
+                                    <thead style="color:#2A3F54;background-color:#f2f2f2">
+                                        <tr style="height:35px">
+                                            <th class="all" style="text-align:left">No.</th>
+                                            <th class="all" style="text-align:left">Nama</th>
+                                            <th class="all" style="text-align:left">Email</th>
+                                            <th class="all" style="text-align:left">Role</th>
+                                            <th class="all" style="text-align:left">Status</th>
+                                            <th class="all" style="text-align:left">Aksi</th>
                                         </tr>
-                                        @foreach ($users as $user)
-                                            <tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer pb-0 pt-0">
+                                <div class="row flex-column-reverse flex-md-row">
+                                    <div class="col-md-7">
 
-                                                <td>{{ $user->name }}
-                                                </td>
-                                                <td>
-                                                    {{ $user->email }}
-                                                </td>
-                                                <td>
-                                                    {{ $user->role }}
-                                                </td>
-                                                <td>{{ $user->created_at }}</td>
-                                                <td>
-                                                    <div class="d-flex justify-content-center">
-                                                        <a href='{{ route('user.edit', $user->id) }}'
-                                                            class="btn btn-sm btn-info btn-icon">
-                                                            <i class="fas fa-edit"></i>
-                                                            Edit
-                                                        </a>
-
-                                                        <form action="{{ route('user.destroy', $user->id) }}" method="POST"
-                                                            class="ml-2">
-                                                            <input type="hidden" name="_method" value="DELETE" />
-                                                            <input type="hidden" name="_token"
-                                                                value="{{ csrf_token() }}" />
-                                                            <button class="btn btn-sm btn-danger btn-icon confirm-delete">
-                                                                <i class="fas fa-times"></i> Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-
-
-                                    </table>
-                                </div>
-                                <div class="float-right">
-                                    {{ $users->withQueryString()->links() }}
+                                    </div>
+                                    <div class="col-md-5 paginate pt-2 pb-2">
+                                        <div class="dataTables_paginate paging_simple_numbers" id="dttable_paginate">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -126,4 +118,163 @@
 
     <!-- Page Specific JS File -->
     <script src="{{ asset('js/page/features-posts.js') }}"></script>
+    <script src="{{ asset('library/datatables/media/js/jquery.datatables.min.js') }}"></script>
+    <script src="{{ asset('library/izitoast/dist/js/iziToast.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            @if (Session::has('success'))
+                iziToast.success({
+                    title: 'Success!',
+                    message: '{{ Session::get('success') }}',
+                    position: 'topRight'
+                });
+            @endif
+
+            var table = $('#dttable').DataTable();
+            $('#dttable').empty();
+            table.destroy();
+            var tbl = $('#dttable').DataTable({
+                scrollX: true,
+                scrollCollapse: true,
+                paging: true,
+                pageLength: 10,
+                lengthChange: true,
+                searching: true,
+                ordering: true,
+                info: false,
+                autoWidth: false,
+                language: {
+                    search: ""
+                },
+                bProcessing: true,
+                bAutoWidth: false,
+
+                ajax: {
+                    'url': '{{ route('user.json') }}',
+                    data: function(d) {
+                        console.log('data async');
+                    }
+                },
+                aoColumns: [{
+                        mData: "id",
+                        render: function(data, type, row, meta) {
+                            return meta.row + 1;
+                        },
+                        sWidth: '5%'
+                    },
+                    {
+                        mData: "name",
+                        name: "name",
+                        sWidth: '20%'
+                    },
+                    {
+                        mData: "email",
+                        name: "email",
+                        sWidth: '20%'
+                    },
+                    {
+                        mData: "role",
+                        name: "role",
+                        sWidth: '10%'
+                    },
+                    {
+                        mData: 'created_at',
+                        sWidth: '10%'
+                    },
+                    {
+                        mData: 'aksi',
+                        sWidth: '5%'
+                    },
+                ],
+                initComplete: function(settings, json) {
+                    $(".search_table").html("");
+                    //search
+                    $('#dttable_filter input[type="search"]').attr('placeholder', 'Cari data...');
+
+                    //paginate
+                    $("#dttable_wrapper .dataTables_paginate").addClass("pull-right");
+                    $("#dttable_wrapper .dataTables_paginate").prependTo(".paginate");
+                    $('.search_table .btn').css({
+                        "font-size": "12px",
+                        "height": "30px"
+                    });
+                },
+
+            });
+
+
+            $('.dataTables_empty').html(
+                '<i class="fa fa-spinner fa-3x fa-spin fa-fw"></i> <span>Loading...</span>');
+            $('table').on('click', 'tr:not(.details-control)', function(e) {
+                $(".dataTables_scrollBody").getNiceScroll().resize();
+            });
+
+            $(document).on('click', '.btn-delete', function() {
+                var id = $(this).data('id');
+                iziToast.question({
+                    timeout: false,
+                    close: false,
+                    overlay: true,
+                    displayMode: 'once',
+                    id: 'question',
+                    zindex: 999,
+                    title: 'Hapus data',
+                    message: 'Anda yakin ingin menghapus data ini?',
+                    position: 'center',
+                    buttons: [
+                        ['<button><b>Ya</b></button>', function(instance, toast) {
+                            instance.hide({
+                                transitionOut: 'fadeOut'
+                            }, toast, 'button');
+                            // Lakukan penghapusan data melalui AJAX
+                            $.ajax({
+                                url: '{{ route('user.destroy', ['user' => ':id']) }}'
+                                    .replace(':id', id),
+                                type: 'DELETE',
+                                dataType: 'json',
+                                data: {
+                                    _token: '{{ csrf_token() }}'
+                                },
+                                success: function(response) {
+                                    console.log(response);
+                                    if (response.success) {
+                                        // Jika penghapusan berhasil, tampilkan pesan sukses
+                                        iziToast.success({
+                                            title: 'Berhasil',
+                                            message: response.success,
+                                            position: 'topRight'
+                                        });
+                                        // Perbarui DataTables
+                                        $('#dttable').DataTable().ajax
+                                            .reload();
+                                    } else {
+                                        // Jika terjadi kesalahan, tampilkan pesan error
+                                        iziToast.error({
+                                            title: 'Error',
+                                            message: response.error,
+                                            position: 'topRight'
+                                        });
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    // Jika terjadi kesalahan saat melakukan request AJAX, tampilkan pesan error
+                                    iziToast.error({
+                                        title: 'Error',
+                                        message: 'Terjadi kesalahan saat menghapus data.',
+                                        position: 'topRight'
+                                    });
+                                }
+                            });
+                        }, true], // true untuk menutup iziToast setelah tombol diklik
+                        ['<button>Tidak</button>', function(instance, toast) {
+                            instance.hide({
+                                transitionOut: 'fadeOut'
+                            }, toast, 'button');
+                        }]
+                    ]
+
+                });
+            });
+        });
+    </script>
 @endpush

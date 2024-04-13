@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Yajra\DataTables\DataTables;
 
 class UserController extends Controller
 {
@@ -12,8 +13,37 @@ class UserController extends Controller
     public function index(Request $request)
     {
         // get all users with pagination
-        $users = User::when($request->input('name'), fn ($query) => $query->where('name', 'like', '%' . $request->input('name') . '%'))->paginate(10);
-        return view('pages.users.index', compact('users'));
+        return view('pages.users.index');
+    }
+
+    public function json()
+    {
+        $data = User::get();
+		$dt = DataTables::of($data)
+		->addColumn('name', function($row){
+			return $row->name;
+        })
+        ->addColumn('email', function($row){
+			return $row->email;
+        })
+        ->addColumn('role', function($row){
+			return $row->role;
+        })
+		->addColumn('created_at', function($row){
+			return date('d-m-Y', strtotime($row->created_at));
+        })
+		->addColumn('aksi', function($row){
+			return '
+			<span data-toggle="tooltip" title="Edit">
+			<a href="'.route('user.edit', $row->id).'" class="btn btn-flat btn-sm btn-primary" > <i class="fa fa-pencil"></i></a></span>
+
+			<span data-toggle="tooltip" title="Hapus"><a href="javascript:void(0)" data-id="'.$row->id.'" data-toggle="modal" data-target="#delItem" class="btn btn-flat btn-danger btn-sm mr-1 btn-delete"><i class="fa fa-trash"></i></a></span>
+		';
+		})
+        ->rawColumns(['aksi'])
+        ->addIndexColumn()
+        ->make();
+		echo json_encode($dt->original);
     }
 
     //create
@@ -87,6 +117,6 @@ class UserController extends Controller
         $user = User::find($id);
         $user->delete();
 
-        return redirect()->route('user.index')->with('success', 'User deleted successfully');
+        return response()->json(['success' => 'Data berhasil dihapus!']);
     }
 }

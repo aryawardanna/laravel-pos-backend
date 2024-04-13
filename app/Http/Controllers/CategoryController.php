@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Yajra\DataTables\DataTables;
 
 class CategoryController extends Controller
 {
@@ -12,8 +13,31 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::paginate(10);
-        return view('pages.categories.index', compact('categories'));
+        return view('pages.categories.index');
+    }
+
+    public function json()
+    {
+        $data = Category::get();
+		$dt = DataTables::of($data)
+		->addColumn('name', function($row){
+			return $row->name;
+        })
+		->addColumn('created_at', function($row){
+			return date('d-m-Y', strtotime($row->created_at));
+        })
+		->addColumn('aksi', function($row){
+			return '
+			<span data-toggle="tooltip" title="Edit">
+			<a href="'.route('categories.edit', $row->id).'" class="btn btn-flat btn-sm btn-primary" > <i class="fa fa-pencil"></i></a></span>
+
+			<span data-toggle="tooltip" title="Hapus"><a href="javascript:void(0)" data-id="'.$row->id.'" data-toggle="modal" data-target="#delItem"  class="btn btn-flat btn-danger btn-sm mr-1 btn-delete"><i class="fa fa-trash"></i></a></span>
+		';
+		})
+        ->rawColumns(['aksi'])
+        ->addIndexColumn()
+        ->make();
+		echo json_encode($dt->original);
     }
 
     /**
@@ -97,8 +121,8 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $category = Category::findOrFail($id);
+        $category = Category::find($id);
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'Category deleted successfully');
+        return response()->json(['success' => 'Data berhasil dihapus!']);
     }
 }
