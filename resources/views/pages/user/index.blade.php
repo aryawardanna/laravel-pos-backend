@@ -4,7 +4,7 @@
 
 @push('style')
     <!-- CSS Libraries -->
-    <link rel="stylesheet" href="{{ asset('library/selectric/public/selectric.css') }}">
+    <link rel="stylesheet" href="{{ asset('library/datatables/media/css/jquery.dataTables.min.css') }}">
 @endpush
 
 @section('main')
@@ -25,83 +25,29 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
-                                <h4>All Users</h4>
-                            </div>
                             <div class="card-body">
-                                <div class="float-left">
-                                    <select class="form-control selectric">
+                                <div class="mb-3">
+                                    <select id="filter-role" class="form-control mb-2 mr-3" style="width:auto; display:inline-block;">
                                         <option value="">-- Pilih Role --</option>
                                         <option value="admin">Admin</option>
                                         <option value="staff">Staff</option>
                                         <option value="user">User</option>
                                     </select>
                                 </div>
-                                <div class="float-right">
-                                    <form method="GET" action="{{ route('user.index') }}">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Search" name="name">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-primary"><i class="fas fa-search"></i></button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <div class="clearfix mb-3"></div>
 
                                 <div class="table-responsive">
-                                    <table class="table-striped table">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Created At</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                        @php
-                                            $no = 1;
-                                        @endphp
-                                        @if(!empty($users))
-                                        @foreach ($users as $key => $user)
+                                    <table id="table-users" class="table-striped table">
+                                        <thead>
                                             <tr>
-                                                <td>{{ $users->firstItem() + $key }}</td>
-                                                <td>{{ $user->name }}
-                                                </td>
-                                                <td>
-                                                    {{ $user->email }}
-                                                </td>
-                                                <td>
-                                                    {{ $user->role }}
-                                                </td>
-                                                <td>{{ date('d F Y', strtotime($user->created_at)) }}</td>
-                                                <td>
-                                                    <div class="d-flex justify-content-center">
-                                                        <a href='{{ route('user.edit', $user->id) }}'
-                                                            class="btn btn-sm btn-info btn-icon">
-                                                            <i class="fas fa-edit"></i>
-                                                            Edit
-                                                        </a>
-
-                                                        <form action="{{ route('user.destroy', $user->id) }}" method="POST"
-                                                            class="ml-2 delete-form">
-                                                            <input type="hidden" name="_method" value="DELETE" />
-                                                            <input type="hidden" name="_token"
-                                                                value="{{ csrf_token() }}" />
-                                                            <button class="btn btn-sm btn-danger btn-icon confirm-delete">
-                                                                <i class="fas fa-times"></i> Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Created At</th>
+                                                <th>Actions</th>
                                             </tr>
-                                        @endforeach
-                                        @endif
+                                        </thead>
                                     </table>
-                                </div>
-                                <div class="float-right">
-                                    {{ $users->withQueryString()->links() }}
                                 </div>
                             </div>
                         </div>
@@ -114,13 +60,51 @@
 
 @push('scripts')
     <!-- JS Libraies -->
-    <script src="{{ asset('library/selectric/public/jquery.selectric.min.js') }}"></script>
+    <script src="{{ asset('library/datatables/media/js/jquery.dataTables.min.js') }}"></script>
 
     <!-- Page Specific JS File -->
-    <script src="{{ asset('js/page/features-posts.js') }}"></script>
     <script>
         $(document).ready(function () {
-            $('.delete-form').on('submit', function (e) {
+            var table = $('#table-users').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                ajax: {
+                    url: "{{ route('user.data') }}",
+                    type: "GET"
+                },
+                columns: [
+                    { data: 'no', name: 'id', orderable: false, searchable: false },
+                    { data: 'name', name: 'name' },
+                    { data: 'email', name: 'email' },
+                    { data: 'role', name: 'role' },
+                    { data: 'created_at', name: 'created_at' },
+                    { data: 'action', name: 'action', orderable: false, searchable: false }
+                ],
+                order: [[4, 'desc']],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                language: {
+                    lengthMenu: "_MENU_",
+                    search: "Cari:",
+                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    infoEmpty: "Tidak ada data",
+                    infoFiltered: "(difilter dari _MAX_ total data)",
+                    zeroRecords: "Tidak ditemukan data yang cocok",
+                    paginate: {
+                        previous: "<i class='fas fa-chevron-left'></i>",
+                        next: "<i class='fas fa-chevron-right'></i>"
+                    }
+                }
+            });
+            $('#filter-role').prependTo('#table-users_wrapper .dataTables_length');
+            // Filter role
+            $('#filter-role').on('change', function () {
+                table.column(3).search($(this).val()).draw();
+            });
+
+            // Delete confirmation (event delegation, karena baris dimuat via AJAX)
+            $(document).on('submit', '.delete-form', function (e) {
                 if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
                     e.preventDefault();
                 }

@@ -15,6 +15,7 @@ Route::middleware(['auth'])->group(function () {
         return view('pages.dashboard');
     })->name('home');
 
+    Route::get('user/data', [UserController::class, 'data'])->name('user.data');
     Route::resource('user', UserController::class);
     Route::resource('product', ProductController::class);
     Route::resource('category', CategoryController::class);
