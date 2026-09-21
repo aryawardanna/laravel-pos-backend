@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
@@ -18,7 +19,7 @@ class UserController extends Controller
 
     public function data(Request $request)
     {
-        $query = User::query();
+        $query = User::where('status', '!=', -1);
 
         // Filter role dari dropdown
         if ($request->get('role')) {
@@ -99,6 +100,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
+        $user->created_by = Auth::user()->id;
         $user->password = Hash::make($request->password);
         $user->save();
 
@@ -139,6 +141,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
+        $user->updated_by = Auth::user()->id;
         $user->save();
 
         if ($request->password) {
@@ -152,7 +155,12 @@ class UserController extends Controller
     // delete
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
+        // User::findOrFail($id)->delete();
+        // update status -1
+        User::find($id)->update([
+            'status' => -1,
+            'updated_by' => Auth::user()->id
+        ]);
         return redirect()->route('user.index')->with('success', 'User deleted successfully');
     }
 }

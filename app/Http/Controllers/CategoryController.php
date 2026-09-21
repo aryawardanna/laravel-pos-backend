@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use File;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class CategoryController extends Controller
@@ -15,16 +16,13 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = Category::when($request->input('name'), function ($query, $name) use ($request) {
-            $query->where('name', 'like', '%' . $name . '%');
-        })->orderBy('id', 'desc')->paginate(10);
         return view('pages.category.index', compact('categories'));
     }
 
 
     public function data(Request $request)
     {
-        $query = Category::query();
+        $query = Category::where('status', '!=', -1);
 
         return DataTables::eloquent($query)
             ->addIndexColumn()
@@ -109,6 +107,7 @@ class CategoryController extends Controller
             'name' => $request->name,
             'description' => $request->description,
             'image' => $imageName,
+            'created_by' => Auth::user()->id
         ]);
 
         return redirect()->route('category.index')->with('success', 'Category created successfully');
@@ -163,7 +162,8 @@ class CategoryController extends Controller
         Category::find($id)->update([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $imageName
+            'image' => $imageName,
+            'updated_by' => Auth::user()->id
         ]);
 
         return redirect()->route('category.index')->with('success', 'Category updated successfully');
@@ -183,7 +183,11 @@ class CategoryController extends Controller
                 File::delete($imagePath);
             }
         }
-        Category::find($id)->delete();
+
+        Category::find($id)->update([
+            'status' => -1,
+            'updated_by' => Auth::user()->id
+        ]);
         return redirect()->route('category.index')->with('success', 'Category deleted successfully');
     }
 }

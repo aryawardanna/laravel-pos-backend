@@ -14,5 +14,8 @@ class Category extends Model
         'name',
         'description',
         'image',
+        'updated_by',
+        'status',
+        'created_by',
     ];
 }

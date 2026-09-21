@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SatuanController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Models\Category;
 use Illuminate\Support\Facades\Route;
@@ -21,4 +23,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('category/data', [CategoryController::class, 'data'])->name('category.data');
     Route::resource('category', CategoryController::class);
+
+    Route::get('satuan/data', [SatuanController::class, 'data'])->name('satuan.data');
+    Route::resource('satuan', SatuanController::class);
+
+    Route::get('supplier/data', [SupplierController::class, 'data'])->name('supplier.data');
+    Route::resource('supplier', SupplierController::class);
 });

@@ -65,11 +65,11 @@
                     <li class="{{ Request::is('/category') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('category.index') }}"><i class="fa fa-list" aria-hidden="true"></i><span>Bahan Baku</span></a>
                     </li>
-                    <li class="{{ Request::is('/category') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-i-cursor"></i><span>Satuan</span></a>
+                    <li class="{{ Request::is('/satuan') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('satuan.index') }}"><i class="fas fa-i-cursor"></i><span>Satuan</span></a>
                     </li>
-                    <li class="{{ Request::is('/category') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-building"></i><span>Supplier</span></a>
+                    <li class="{{ Request::is('/supplier') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('supplier.index') }}"><i class="fas fa-building"></i><span>Supplier</span></a>
                     </li>
                 </ul>
             </li>
