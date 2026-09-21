@@ -25,9 +25,6 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
-                                <h4>All Categories</h4>
-                            </div>
                             <div class="card-body">
                                 <div class="float-right">
                                     <form method="GET" action="{{ route('category.index') }}">

@@ -18,5 +18,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('user/data', [UserController::class, 'data'])->name('user.data');
     Route::resource('user', UserController::class);
     Route::resource('product', ProductController::class);
+
+    Route::get('category/data', [CategoryController::class, 'data'])->name('category.data');
     Route::resource('category', CategoryController::class);
 });

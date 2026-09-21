@@ -3,11 +3,18 @@
 @section('title', 'Users')
 
 @push('style')
-    <!-- CSS Libraries -->
     <link rel="stylesheet" href="{{ asset('library/datatables/media/css/jquery.dataTables.min.css') }}">
 @endpush
 
 @section('main')
+    @php
+        $role = "";
+    @endphp
+    @if(isset($_GET['role']))
+        @php
+            $role = $_GET['role'];
+        @endphp
+    @endif
     <div class="main-content">
         <section class="section">
             <div class="section-header">
@@ -29,9 +36,9 @@
                                 <div class="mb-3">
                                     <select id="filter-role" class="form-control mb-2 mr-3" style="width:auto; display:inline-block;">
                                         <option value="">-- Pilih Role --</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="staff">Staff</option>
-                                        <option value="user">User</option>
+                                        <option value="admin" {{ $role == 'admin' ? 'selected' : '' }}>Admin</option>
+                                        <option value="staff" {{ $role == 'staff' ? 'selected' : '' }}>Staff</option>
+                                        <option value="user" {{ $role == 'user' ? 'selected' : '' }}>User</option>
                                     </select>
                                 </div>
 
@@ -65,43 +72,62 @@
     <!-- Page Specific JS File -->
     <script>
         $(document).ready(function () {
-            var table = $('#table-users').DataTable({
+
+            $('#table-users').DataTable({
                 processing: true,
                 serverSide: true,
                 responsive: true,
                 ajax: {
-                    url: "{{ route('user.data') }}",
-                    type: "GET"
+                    url: '{{ route("user.data") }}',
+                    data: function (d) {
+                        d.role = '{{ $role }}';
+                    }
                 },
                 columns: [
-                    { data: 'no', name: 'id', orderable: false, searchable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'email', name: 'email' },
-                    { data: 'role', name: 'role' },
-                    { data: 'created_at', name: 'created_at' },
-                    { data: 'action', name: 'action', orderable: false, searchable: false }
-                ],
-                order: [[4, 'desc']],
-                pageLength: 25,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                language: {
-                    lengthMenu: "_MENU_",
-                    search: "Cari:",
-                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                    infoEmpty: "Tidak ada data",
-                    infoFiltered: "(difilter dari _MAX_ total data)",
-                    zeroRecords: "Tidak ditemukan data yang cocok",
-                    paginate: {
-                        previous: "<i class='fas fa-chevron-left'></i>",
-                        next: "<i class='fas fa-chevron-right'></i>"
+                    {
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'email',
+                        name: 'email'
+                    },
+                    {
+                        data: 'role',
+                        name: 'role'
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
                     }
-                }
+                ]
+            });
+
+            $('#role-filter').on('change', function () {
+                $('#table-users').DataTable().ajax.reload();
             });
             $('#filter-role').prependTo('#table-users_wrapper .dataTables_length');
-            // Filter role
+
+            // onchange role window location
             $('#filter-role').on('change', function () {
-                table.column(3).search($(this).val()).draw();
+                var role = $(this).val();
+                var url = "{{ route('user.index') }}?role=" + role;
+                window.location.href = url;
             });
+
+
 
             // Delete confirmation (event delegation, karena baris dimuat via AJAX)
             $(document).on('submit', '.delete-form', function (e) {

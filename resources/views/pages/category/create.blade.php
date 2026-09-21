@@ -16,7 +16,7 @@
     <div class="main-content">
         <section class="section">
             <div class="section-header">
-                <h1>Advanced Forms</h1>
+                <h2 class="section-title m-0">Categories</h2>
                 <div class="section-header-breadcrumb">
                     <div class="breadcrumb-item active"><a href="#">Dashboard</a></div>
                     <div class="breadcrumb-item"><a href="#">Forms</a></div>
@@ -25,21 +25,15 @@
             </div>
 
             <div class="section-body">
-                <h2 class="section-title">Categories</h2>
+
                 <div class="card">
                     <form action="{{ route('category.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="card-header">
-                            <h4>Input Text</h4>
-                        </div>
+
                         <div class="card-body">
                             <div class="form-group">
                                 <label>Name</label>
-                                <input type="text"
-                                    class="form-control @error('name')
-                                is-invalid
-                            @enderror"
-                                    name="name" value="{{ old('name') }}">
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}">
                                 @error('name')
                                     <div class="invalid-feedback">
                                         {{ $message }}
