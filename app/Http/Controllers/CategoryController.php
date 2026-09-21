@@ -16,7 +16,7 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        return view('pages.category.index', compact('categories'));
+        return view('pages.category.index');
     }
 
 

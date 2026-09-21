@@ -120,4 +120,26 @@ class SatuanTest extends TestCase
             ->assertOk()
             ->assertJsonCount(0, 'data');
     }
+
+    public function test_sidebar_highlights_satuan_menu_on_subpages(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+        $satuan = Satuan::create(['name' => 'Pieces', 'code' => 'Pcs', 'status' => 1]);
+
+        // Menu "Satuan" tetap ter-highlight di halaman index, create, dan edit
+        $this->assertSidebarMenuActive(route('satuan.index'), $user);
+        $this->assertSidebarMenuActive(route('satuan.create'), $user);
+        $this->assertSidebarMenuActive(route('satuan.edit', $satuan->id), $user);
+    }
+
+    private function assertSidebarMenuActive(string $pageUrl, User $user): void
+    {
+        $html = $this->actingAs($user)->get($pageUrl)->assertOk()->getContent();
+
+        // Ambil <li class="active"> pertama yang mengandung <a class="nav-link">
+        preg_match('/<li class="active">\s*<a class="nav-link" href="([^"]*)"/', $html, $m);
+
+        $this->assertNotNull($m[1] ?? null, 'Tidak ditemukan menu sidebar aktif di: ' . $pageUrl);
+        $this->assertSame(route('satuan.index'), $m[1], 'Menu aktif di sidebar bukan "Satuan" untuk: ' . $pageUrl);
+    }
 }
