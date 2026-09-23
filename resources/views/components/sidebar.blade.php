@@ -59,11 +59,11 @@
                     <li class="{{ Request::is('category*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-layer-group"></i><span>Kategori Menu</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-utensils"></i><span>Produk / Menu</span></a>
+                    <li class="{{ Request::is('menu*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('menu.index') }}"><i class="fas fa-utensils"></i><span>Produk / Menu</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fa fa-list" aria-hidden="true"></i><span>Bahan Baku</span></a>
+                    <li class="{{ Request::is('bahan_baku*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('bahan_baku.index') }}"><i class="fa fa-list" aria-hidden="true"></i><span>Bahan Baku</span></a>
                     </li>
                     <li class="{{ Request::is('satuan*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('satuan.index') }}"><i class="fas fa-i-cursor"></i><span>Satuan</span></a>

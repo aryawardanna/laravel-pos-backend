@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             SatuanSeeder::class,
             SupplierSeeder::class,
+            BahanBakuSeeder::class,
+            MenuSeeder::class,
         ]);
     }
 }

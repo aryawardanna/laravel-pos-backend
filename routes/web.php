@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\SupplierController;
@@ -29,4 +31,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('supplier/data', [SupplierController::class, 'data'])->name('supplier.data');
     Route::resource('supplier', SupplierController::class);
+
+    Route::get('bahan_baku/data', [BahanBakuController::class, 'data'])->name('bahan_baku.data');
+    Route::resource('bahan_baku', BahanBakuController::class);
+
+    Route::get('menu/data', [MenuController::class, 'data'])->name('menu.data');
+    Route::resource('menu', MenuController::class);
 });
