@@ -224,4 +224,45 @@ class MenuTest extends TestCase
         $this->assertNotNull($m[1] ?? null, 'Tidak ditemukan menu sidebar aktif di: ' . $pageUrl);
         $this->assertSame(route('menu.index'), $m[1], 'Menu aktif di sidebar bukan "Produk / Menu" untuk: ' . $pageUrl);
     }
+
+    public function test_menu_image_uses_default_when_empty_or_file_missing(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        $tanpaGambar = Menu::create(['name' => 'Kopi', 'code' => 'KOPI', 'status' => 1]);
+        Menu::create(['name' => 'Teh', 'code' => 'TEH', 'image' => 'teh-hilang.jpg', 'status' => 1]);
+
+        $data = json_decode($this->actingAs($user)->get(route('menu.data'))->assertOk()->getContent(), true)['data'];
+
+        // gambar kosong maupun file yang sudah tidak ada -> gambar default
+        $this->assertStringContainsString('images/default-menu.svg', $data[0]['image']);
+        $this->assertStringContainsString('images/default-menu.svg', $data[1]['image']);
+
+        // gambar berupa URL lengkap dipakai apa adanya
+        $this->assertSame('https://example.com/kopi.jpg', MenuImageUrl('https://example.com/kopi.jpg'));
+        $this->assertSame(
+            'https://example.com/kopi.jpg',
+            MenuImageUrl((object) ['image' => 'https://example.com/kopi.jpg'])
+        );
+
+        // gambar yang file-nya tersedia dipakai di kolom image
+        file_put_contents(public_path('images/menu/uji-menu.jpg'), 'dummy');
+
+        try {
+            Menu::create(['name' => 'Jeruk', 'code' => 'JRK', 'image' => 'uji-menu.jpg', 'status' => 1]);
+
+            $data = json_decode($this->actingAs($user)->get(route('menu.data'))->assertOk()->getContent(), true)['data'];
+            $row = collect($data)->firstWhere('code', 'JRK');
+
+            $this->assertStringContainsString('images/menu/uji-menu.jpg', $row['image']);
+
+            // form edit ikut menampilkan gambar default bila menu belum punya gambar
+            $this->actingAs($user)->get(route('menu.edit', $tanpaGambar->id))
+                ->assertOk()
+                ->assertSee('images/default-menu.svg')
+                ->assertSee('Belum ada gambar, memakai gambar default.');
+        } finally {
+            @unlink(public_path('images/menu/uji-menu.jpg'));
+        }
+    }
 }

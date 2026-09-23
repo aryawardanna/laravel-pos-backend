@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img" aria-label="Gambar belum tersedia">
+    <rect width="400" height="300" fill="#e9ecef"/>
+    <circle cx="200" cy="140" r="78" fill="none" stroke="#ced4da" stroke-width="8"/>
+    <g stroke="#adb5bd" stroke-width="10" stroke-linecap="round" fill="none">
+        <line x1="176" y1="120" x2="176" y2="190"/>
+        <ellipse cx="176" cy="106" rx="16" ry="22"/>
+        <line x1="228" y1="120" x2="228" y2="190"/>
+        <line x1="212" y1="86" x2="212" y2="120"/>
+        <line x1="228" y1="86" x2="228" y2="120"/>
+        <line x1="244" y1="86" x2="244" y2="120"/>
+    </g>
+    <text x="200" y="262" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#868e96">No Image</text>
+</svg>

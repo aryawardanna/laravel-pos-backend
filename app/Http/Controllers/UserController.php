@@ -47,6 +47,16 @@ class UserController extends Controller
                 };
             })
 
+            ->addColumn('status', function (User $user) {
+                if ($user->status === 1) {
+                    return '<span class="badge badge-success">Active</span>';
+                }
+                if ($user->status === 0) {
+                    return '<span class="badge badge-danger">Nonactive</span>';
+                }
+                return '<span class="badge badge-secondary">Deleted</span>';
+            })
+
             ->editColumn('created_at', function (User $user) {
                 return $user->created_at
                     ? $user->created_at->format('d F Y')
@@ -70,7 +80,7 @@ class UserController extends Controller
                         </form>';
             })
 
-            ->rawColumns(['role', 'action'])
+            ->rawColumns(['role', 'status', 'action'])
             ->toJson();
     }
 
@@ -100,6 +110,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
+        $user->status = 1;
         $user->created_by = Auth::user()->id;
         $user->password = Hash::make($request->password);
         $user->save();
@@ -141,6 +152,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
+        $user->status = $request->status ?? $user->status;
         $user->updated_by = Auth::user()->id;
         $user->save();
 

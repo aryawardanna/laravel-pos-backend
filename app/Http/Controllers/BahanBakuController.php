@@ -164,12 +164,12 @@ class BahanBakuController extends Controller
             $image->move(public_path('images/bahan_baku'), $imageName);
         }
 
-        BahanBaku::create([
+        $bahanBaku = BahanBaku::create([
             'name' => $request->name,
             'code' => $request->code,
             'satuan_id' => $request->satuan_id,
             'price' => StoreMoney($request->price) ?? 0,
-            'stock' => $request->stock ?? 0,
+            'stock' => 0,
             'min_stock' => $request->min_stock ?? 0,
             'description' => $request->description,
             'image' => $imageName,
@@ -246,13 +246,14 @@ class BahanBakuController extends Controller
             'code' => $request->code,
             'satuan_id' => $request->satuan_id,
             'price' => StoreMoney($request->price) ?? 0,
-            'stock' => $request->stock ?? 0,
             'min_stock' => $request->min_stock ?? 0,
             'description' => $request->description,
             'image' => $imageName,
             'status' => $status,
             'updated_by' => Auth::user()->id,
         ]);
+
+        // stok tidak diubah lewat master (stok berasal dari batch pembelian/opname)
 
         return redirect()->route('bahan_baku.index')->with('success', 'Bahan Baku updated successfully');
     }

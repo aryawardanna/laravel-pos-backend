@@ -35,6 +35,30 @@ class BahanBaku extends Model
         return $this->belongsToMany(Menu::class, 'menu_bahan_bakus')->withPivot('quantity');
     }
 
+    /**
+     * Baris pembelian bahan baku (setiap baris adalah satu batch/lot).
+     */
+    public function purchaseItems()
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    /**
+     * Riwayat pergerakan stok (kartu stok).
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * Baris hasil hitung fisik (stock opname).
+     */
+    public function stockOpnameItems()
+    {
+        return $this->hasMany(StockOpnameItem::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

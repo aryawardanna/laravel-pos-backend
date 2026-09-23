@@ -102,11 +102,13 @@
                                         {{ $message }}
                                     </div>
                                 @enderror
-                                @if($menu->image)
-                                    <div class="mb-2 mt-2">
-                                        <img src="{{ asset('images/menu/' . $menu->image) }}" width="100" alt="Current Image">
-                                    </div>
-                                @endif
+                                <div class="mb-2 mt-2">
+                                    <img src="{{ MenuImageUrl($menu) }}" id="menu-image-preview" width="100"
+                                        style="object-fit: cover; border-radius: 5px;" alt="Gambar menu">
+                                    <small class="d-block text-muted">
+                                        {{ $menu->image ? 'Gambar saat ini.' : 'Belum ada gambar, memakai gambar default.' }}
+                                    </small>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Status</label>
@@ -243,6 +245,20 @@
             $(document).on('change', '.bahan-baku-row select', function () {
                 updateSatuanBadge($(this).closest('.bahan-baku-row'));
             });
+        });
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        // Pratinjau gambar menu: default tampil, ganti saat user memilih file baru
+        $(document).on('change', 'input[name="image"]', function () {
+            var file = this.files && this.files[0];
+            if (!file) {
+                return;
+            }
+            $('#menu-image-preview').attr('src', URL.createObjectURL(file));
+            $('#menu-image-preview').next('small').text('Pratinjau gambar yang akan diunggah.');
         });
     </script>
 @endpush

@@ -31,6 +31,8 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             BahanBakuSeeder::class,
             MenuSeeder::class,
+            PurchaseSeeder::class,
+            StockOpnameSeeder::class,
         ]);
     }
 }

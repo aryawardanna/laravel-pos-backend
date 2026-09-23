@@ -101,6 +101,11 @@
                                         {{ $message }}
                                     </div>
                                 @enderror
+                                <div class="mb-2 mt-2">
+                                    <img src="{{ MenuImageUrl(null) }}" id="menu-image-preview" width="100"
+                                        style="object-fit: cover; border-radius: 5px;" alt="Gambar menu">
+                                    <small class="d-block text-muted">Belum ada gambar, memakai gambar default.</small>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Status</label>
@@ -210,4 +215,19 @@
             }
         });
     </script>
+
+@push('scripts')
+    <script>
+        // Pratinjau gambar menu: default tampil, ganti saat user memilih file baru
+        $(document).on('change', 'input[name="image"]', function () {
+            var file = this.files && this.files[0];
+            if (!file) {
+                return;
+            }
+            $('#menu-image-preview').attr('src', URL.createObjectURL(file));
+            $('#menu-image-preview').next('small').text('Pratinjau gambar yang akan diunggah.');
+        });
+    </script>
+@endpush
+
 @endpush

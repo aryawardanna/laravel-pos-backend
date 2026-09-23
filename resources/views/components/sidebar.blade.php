@@ -17,39 +17,39 @@
             <li class="dropdown">
                 <a href="#" class="nav-link has-dropdown"><i class="fas fa-shopping-cart ml-0"></i> <span>Transaksi</span></a>
                 <ul class="dropdown-menu">
-                    <li class="{{ Request::is('user*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('user.index') }}"><i class="fas fa-laptop"></i><span>Penjualan / Kasir</span></a>
+                    <li class="{{ Request::is('sale*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('sale.index') }}"><i class="fas fa-laptop"></i><span>Penjualan / Kasir</span></a>
                     </li>
-                    <li class="{{ Request::is('user*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('user.index') }}"><i class="fas fa-money-bill"></i></i><span>Pembelian</span></a>
+                    <li class="{{ Request::is('purchase*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('purchase.index') }}"><i class="fas fa-money-bill"></i><span>Pembelian</span></a>
                     </li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a href="#" class="nav-link has-dropdown"><i class="fas fa-warehouse ml-0"></i> <span>Inventory</span></a>
                 <ul class="dropdown-menu">
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fab fa-stack-exchange"></i></i><span>Stok Bahan Baku</span></a>
+                    <li class="{{ Request::is('batch_bahan_baku*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('batch_bahan_baku.index') }}"><i class="fas fa-barcode"></i><span>Batch / Lot Stok</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-chart-line"></i></i><span>Kartu Stok</span></a>
+                    <li class="{{ Request::is('kartu_stok*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('kartu_stok.index') }}"><i class="fas fa-chart-line"></i><span>Kartu Stok</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="far fa-clipboard"></i><span>Stock Opname</span></a>
+                    <li class="{{ Request::is('stock_opname*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('stock_opname.index') }}"><i class="far fa-clipboard"></i><span>Stock Opname</span></a>
                     </li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a href="#" class="nav-link has-dropdown"><i class="far fa-file-excel ml-0"></i> <span>Laporan</span></a>
                 <ul class="dropdown-menu">
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="far fa-chart-bar"></i></i><span>Penjualan</span></a>
+                    <li class="">
+                        <a class="nav-link" href="#"><i class="far fa-chart-bar"></i></i><span>Penjualan</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-box-open"></i><span>Barang Masuk</span></a>
+                    <li class="">
+                        <a class="nav-link" href="#"><i class="fas fa-box-open"></i><span>Barang Masuk</span></a>
                     </li>
-                    <li class="{{ Request::is('category*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('category.index') }}"><i class="fas fa-boxes"></i><span>Stok</span></a>
+                    <li class="">
+                        <a class="nav-link" href="#"><i class="fas fa-boxes"></i><span>Stok</span></a>
                     </li>
                 </ul>
             </li>

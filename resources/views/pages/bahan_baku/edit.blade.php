@@ -97,21 +97,9 @@
                                     </div>
                                 @enderror
                             </div>
-                            <div class="form-group">
-                                <label>Stock</label>
-                                <input type="number"
-                                    step="0.01"
-                                    min="0"
-                                    class="form-control @error('stock')
-                                is-invalid
-                            @enderror"
-                                    name="stock" value="{{ $bahanBaku->stock }}">
-                                @error('stock')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+                                                        <!-- Stok dihitung otomatis dari total batch pembelian/opname,
+                                 tidak diinput manual pada master bahan baku. -->
+
                             <div class="form-group">
                                 <label>Min Stock</label>
                                 <input type="number"

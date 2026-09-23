@@ -98,6 +98,21 @@
 
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="selectgroup w-100">
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="status" value="1" class="selectgroup-input"
+                                            @if ($user->status == 1) checked @endif>
+                                        <span class="selectgroup-button"><i class="fas fa-check-circle text-success"></i> Active</span>
+                                    </label>
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="status" value="0" class="selectgroup-input"
+                                            @if ($user->status == 0) checked @endif>
+                                        <span class="selectgroup-button"><i class="fas fa-ban text-danger"></i> Nonactive</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-footer text-right">
                             <button class="btn btn-primary">Submit</button>

@@ -44,17 +44,9 @@ class MenuController extends Controller
                 return $menu->code ? e($menu->code) : '-';
             })
 
-            // Image
+            // Image (memakai gambar default bila menu belum punya gambar)
             ->editColumn('image', function (Menu $menu) {
-                if (empty($menu->image)) {
-                    return '-';
-                }
-
-                $imageUrl = filter_var($menu->image, FILTER_VALIDATE_URL)
-                    ? $menu->image
-                    : asset('images/menu/' . $menu->image);
-
-                return '<img src="' . e($imageUrl) . '"
+                return '<img src="' . e(MenuImageUrl($menu)) . '"
                             width="50"
                             height="50"
                             style="object-fit: cover; border-radius: 5px;"

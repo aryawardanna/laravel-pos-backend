@@ -68,7 +68,10 @@ class BahanBakuSeeder extends Seeder
                 continue;
             }
 
-            BahanBaku::create($bahanBaku);
+            $created = BahanBaku::create($bahanBaku);
+
+            // stok awal harus tercermin juga di batch/lot
+            SyncBahanBakuBatches($created);
         }
     }
 }
