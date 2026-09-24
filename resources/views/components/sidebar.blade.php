@@ -42,14 +42,14 @@
             <li class="dropdown">
                 <a href="#" class="nav-link has-dropdown"><i class="far fa-file-excel ml-0"></i> <span>Laporan</span></a>
                 <ul class="dropdown-menu">
-                    <li class="">
-                        <a class="nav-link" href="#"><i class="far fa-chart-bar"></i></i><span>Penjualan</span></a>
+                    <li class="{{ Request::is('laporan/penjualan*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('laporan.penjualan.index') }}"><i class="far fa-chart-bar"></i></i><span>Penjualan</span></a>
                     </li>
-                    <li class="">
-                        <a class="nav-link" href="#"><i class="fas fa-box-open"></i><span>Barang Masuk</span></a>
+                    <li class="{{ Request::is('laporan/barang-masuk*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('laporan.barang_masuk.index') }}"><i class="fas fa-box-open"></i><span>Barang Masuk</span></a>
                     </li>
-                    <li class="">
-                        <a class="nav-link" href="#"><i class="fas fa-boxes"></i><span>Stok</span></a>
+                    <li class="{{ Request::is('laporan/stok*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('laporan.stok.index') }}"><i class="fas fa-boxes"></i><span>Stok</span></a>
                     </li>
                 </ul>
             </li>

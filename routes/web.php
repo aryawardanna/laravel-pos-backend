@@ -3,7 +3,11 @@
 use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\BatchBahanBakuController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KartuStokController;
+use App\Http\Controllers\LaporanBarangMasukController;
+use App\Http\Controllers\LaporanPenjualanController;
+use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
@@ -20,9 +24,7 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('home', function () {
-        return view('pages.dashboard');
-    })->name('home');
+    Route::get('home', [DashboardController::class, 'index'])->name('home');
 
     Route::get('user/data', [UserController::class, 'data'])->name('user.data');
     Route::resource('user', UserController::class);
@@ -67,4 +69,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('stock_opname/data', [StockOpnameController::class, 'data'])->name('stock_opname.data');
     Route::post('stock_opname/{id}/finalize', [StockOpnameController::class, 'finalize'])->name('stock_opname.finalize');
     Route::resource('stock_opname', StockOpnameController::class);
+
+    // Laporan penjualan (datatable + export excel + pdf)
+    Route::get('laporan/penjualan/data', [LaporanPenjualanController::class, 'data'])->name('laporan.penjualan.data');
+    Route::get('laporan/penjualan/summary', [LaporanPenjualanController::class, 'summary'])->name('laporan.penjualan.summary');
+    Route::get('laporan/penjualan/export', [LaporanPenjualanController::class, 'export'])->name('laporan.penjualan.export');
+    Route::get('laporan/penjualan/print', [LaporanPenjualanController::class, 'print'])->name('laporan.penjualan.print');
+    Route::get('laporan/penjualan/pdf', [LaporanPenjualanController::class, 'pdf'])->name('laporan.penjualan.pdf');
+    Route::get('laporan/penjualan', [LaporanPenjualanController::class, 'index'])->name('laporan.penjualan.index');
+
+    // Laporan barang masuk (datatable + export excel + pdf browser)
+    Route::get('laporan/barang-masuk/data', [LaporanBarangMasukController::class, 'data'])->name('laporan.barang_masuk.data');
+    Route::get('laporan/barang-masuk/summary', [LaporanBarangMasukController::class, 'summary'])->name('laporan.barang_masuk.summary');
+    Route::get('laporan/barang-masuk/export', [LaporanBarangMasukController::class, 'export'])->name('laporan.barang_masuk.export');
+    Route::get('laporan/barang-masuk/print', [LaporanBarangMasukController::class, 'print'])->name('laporan.barang_masuk.print');
+    Route::get('laporan/barang-masuk', [LaporanBarangMasukController::class, 'index'])->name('laporan.barang_masuk.index');
+
+    // Laporan stok bahan baku (datatable + export excel + pdf browser)
+    Route::get('laporan/stok/data', [LaporanStokController::class, 'data'])->name('laporan.stok.data');
+    Route::get('laporan/stok/summary', [LaporanStokController::class, 'summary'])->name('laporan.stok.summary');
+    Route::get('laporan/stok/export', [LaporanStokController::class, 'export'])->name('laporan.stok.export');
+    Route::get('laporan/stok/print', [LaporanStokController::class, 'print'])->name('laporan.stok.print');
+    Route::get('laporan/stok', [LaporanStokController::class, 'index'])->name('laporan.stok.index');
 });
