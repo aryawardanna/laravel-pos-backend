@@ -31,12 +31,19 @@
 
                                 <div class="table-responsive">
                                     <table class="table-striped table" id="table-categories">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Name</th>
-                                            <th>Image</th>
-                                            <th>Actions</th>
-                                        </tr>
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Description</th>
+                                                <th>Image</th>
+                                                <th>Status</th>
+                                                <th>Created By</th>
+                                                <th>Updated By</th>
+                                                <th>Created At</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
                                     </table>
                                 </div>
                             </div>
@@ -62,7 +69,7 @@
                 processing: true,
                 serverSide: true,
                 responsive: true,
-                paging:25,
+                pageLength: 25,
                 ajax: {
                     url: '{{ route("category.data") }}'
                 },
@@ -79,8 +86,38 @@
                         name: 'name'
                     },
                     {
+                        data: 'description',
+                        name: 'description',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
                         data: 'image',
                         name: 'image',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'created_by',
+                        name: 'created_by',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'updated_by',
+                        name: 'updated_by',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at',
                         orderable: false,
                         searchable: false
                     },

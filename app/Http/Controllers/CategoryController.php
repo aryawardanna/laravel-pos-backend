@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use File;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use File;
 use Yajra\DataTables\Facades\DataTables;
 
 class CategoryController extends Controller
@@ -22,13 +24,40 @@ class CategoryController extends Controller
 
     public function data(Request $request)
     {
-        $query = Category::where('status', '!=', -1);
+        $hasStatus = Schema::hasColumn('categories', 'status');
+        $hasCreatedBy = Schema::hasColumn('categories', 'created_by');
+        $hasUpdatedBy = Schema::hasColumn('categories', 'updated_by');
+
+        $query = Category::query();
+
+        $with = [];
+        if ($hasCreatedBy) {
+            $with[] = 'creator';
+        }
+        if ($hasUpdatedBy) {
+            $with[] = 'updater';
+        }
+        if (! empty($with)) {
+            $query->with($with);
+        }
+
+        // Tabel lama belum punya kolom status -> jangan filter pakai status agar tidak SQL error.
+        // Setelah migrasi add_status jalan, filter soft-delete (-1) otomatis aktif.
+        if ($hasStatus) {
+            $query->where('status', '!=', -1);
+        }
 
         return DataTables::eloquent($query)
             ->addIndexColumn()
 
             ->editColumn('name', function (Category $category) {
                 return e($category->name);
+            })
+
+            ->addColumn('description', function (Category $category) {
+                return $category->description
+                    ? Str::limit(e($category->description), 50)
+                    : '-';
             })
 
             // Image
@@ -50,6 +79,37 @@ class CategoryController extends Controller
                             alt="Category Image">';
             })
 
+            ->addColumn('status', function (Category $category) {
+                // Tabel lama belum punya kolom status -> anggap Active
+                $status = $category->getAttribute('status') ?? 1;
+
+                return (int) $status === 1
+                    ? '<span class="badge badge-success">Active</span>'
+                    : '<span class="badge badge-secondary">Inactive</span>';
+            })
+
+            ->addColumn('created_by', function (Category $category) use ($hasCreatedBy) {
+                if (! $hasCreatedBy) {
+                    return '-';
+                }
+
+                return $category->creator ? e($category->creator->name) : '-';
+            })
+
+            ->addColumn('updated_by', function (Category $category) use ($hasUpdatedBy) {
+                if (! $hasUpdatedBy) {
+                    return '-';
+                }
+
+                return $category->updater ? e($category->updater->name) : '-';
+            })
+
+            ->editColumn('created_at', function (Category $category) {
+                return $category->created_at
+                    ? $category->created_at->format('d F Y')
+                    : '-';
+            })
+
             // Action
             ->addColumn('action', function (Category $category) {
                 return '<a href="' . route('category.edit', $category->id) . '"
@@ -68,8 +128,8 @@ class CategoryController extends Controller
                         </form>';
             })
 
-            // Izinkan HTML hanya untuk kolom image dan action
-            ->rawColumns(['image', 'action'])
+            // Izinkan HTML hanya untuk kolom image, status, dan action
+            ->rawColumns(['image', 'status', 'action'])
             ->toJson();
     }
 
@@ -88,6 +148,8 @@ class CategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'status' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
 
@@ -103,12 +165,24 @@ class CategoryController extends Controller
             $image->move(public_path('images/category'), $imageName);
         }
 
-        Category::create([
+        $data = [
             'name' => $request->name,
             'description' => $request->description,
             'image' => $imageName,
-            'created_by' => Auth::user()->id
-        ]);
+        ];
+
+        if (Schema::hasColumn('categories', 'created_by')) {
+            $data['created_by'] = Auth::user()->id;
+        }
+
+        if (Schema::hasColumn('categories', 'status')) {
+            $data['status'] = $request->has('status') ? (int) $request->status : 1;
+        }
+        if (Schema::hasColumn('categories', 'updated_by')) {
+            $data['updated_by'] = Auth::user()->id;
+        }
+
+        Category::create($data);
 
         return redirect()->route('category.index')->with('success', 'Category created successfully');
     }
@@ -137,6 +211,8 @@ class CategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'status' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
 
@@ -144,12 +220,14 @@ class CategoryController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $category = Category::findOrFail($id);
+
         // upload image
+        $imageName = $category->image;
         if ($request->hasFile('image')) {
             // delete image old
-            $category = Category::find($id);
             if ($category->image) {
-                $imagePath = public_path('images/category' . $category->image);
+                $imagePath = public_path('images/category/' . $category->image);
                 if (File::exists($imagePath)) {
                     File::delete($imagePath);
                 }
@@ -159,12 +237,21 @@ class CategoryController extends Controller
             $image->move(public_path('images/category'), $imageName);
         }
 
-        Category::find($id)->update([
+        $data = [
             'name' => $request->name,
             'description' => $request->description,
             'image' => $imageName,
-            'updated_by' => Auth::user()->id
-        ]);
+        ];
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'updated_by')) {
+            $data['updated_by'] = Auth::user()->id;
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'status')) {
+            $data['status'] = $request->has('status') ? (int) $request->status : (int) ($category->getAttribute('status') ?? 1);
+        }
+
+        $category->update($data);
 
         return redirect()->route('category.index')->with('success', 'Category updated successfully');
     }
@@ -175,7 +262,7 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         // delete img old
-        $category = Category::find($id);
+        $category = Category::findOrFail($id);
         if ($category->image) {
 
             $imagePath = public_path('images/category/' . $category->image);
@@ -184,10 +271,17 @@ class CategoryController extends Controller
             }
         }
 
-        Category::find($id)->update([
-            'status' => -1,
-            'updated_by' => Auth::user()->id
-        ]);
+        // Kalau kolom status belum ada (DB lama), hapus permanen.
+        // Kalau sudah ada, soft-delete via status -1 seperti modul lain.
+        if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'status')) {
+            $category->update([
+                'status' => -1,
+                'updated_by' => Auth::user()->id,
+            ]);
+        } else {
+            $category->delete();
+        }
+
         return redirect()->route('category.index')->with('success', 'Category deleted successfully');
     }
 }

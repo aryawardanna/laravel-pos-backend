@@ -42,11 +42,36 @@
                             </div>
                             <div class="form-group">
                                 <label>Description</label>
-                                <textarea class="form-control" data-height="150" name="description" placeholder=".....">{{ old('description') }}</textarea>
+                                <textarea class="form-control @error('description') is-invalid @enderror" data-height="150" name="description" placeholder=".....">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
                             <div class="form-group">
                                 <label>Image</label>
-                                <input type="file" name="image" class="form-control" value="{{ old('image') }}" accept="image/*">
+                                <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
+                                @error('image')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="selectgroup w-100">
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="status" value="1" class="selectgroup-input"
+                                            {{ old('status', '1') == '1' ? 'checked' : '' }}>
+                                        <span class="selectgroup-button">Active</span>
+                                    </label>
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="status" value="0" class="selectgroup-input"
+                                            {{ old('status') == '0' ? 'checked' : '' }}>
+                                        <span class="selectgroup-button">Inactive</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <div class="card-footer text-right">
