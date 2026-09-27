@@ -3,14 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\Menu;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -54,11 +57,49 @@ class User extends Authenticatable
     /**
      * Scope a query to only include active users (status = 1).
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    /**
+     * Samakan role Spatie dengan kolom `role` pada tabel users.
+     *
+     * Kolom `role` tetap menjadi sumber utama (dipakai form user & daftar
+     * user), sementara tabel Spatie menyimpan permission tiap role.
+     * Dijalankan oleh middleware SyncUserRole setiap request.
+     */
+    public function syncRoleFromColumn(): void
+    {
+        if (! $this->exists) {
+            return;
+        }
+
+        $role = (string) ($this->role ?: 'user');
+
+        if (in_array($role, $this->getRoleNames()->all(), true)) {
+            return;
+        }
+
+        $this->syncRoles([Role::findOrCreate($role, $this->getDefaultGuardName())]);
+    }
+
+    /**
+     * User ini super admin? (lihat config/menu.php)
+     */
+    public function isSuperAdmin(): bool
+    {
+        return app(Menu::class)->isSuperAdmin($this);
+    }
+
+    /**
+     * User ini boleh membuka modul/permission tersebut?
+     */
+    public function canAccessMenu(string $permission): bool
+    {
+        return app(Menu::class)->can($this, $permission);
     }
 }

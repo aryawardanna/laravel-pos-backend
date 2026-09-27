@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\Menu;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
@@ -16,7 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Menu accessor ikut memakai cache per-request (Super admin & status
+        // konfigurasi permission) supaya tidak query berulang di sidebar.
+        $this->app->scoped(Menu::class, fn () => new Menu);
     }
 
     /**
@@ -25,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFour();
+
+        $this->registerMenuAccess();
+        $this->registerSidebarMenu();
 
         /*
          * Custom authentication callback: only allow login if user status = 1 (active).
@@ -58,6 +66,44 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return $user;
+        });
+    }
+
+    /**
+     * Hak akses menu dinamis (spatie/laravel-permission).
+     *
+     * - Super admin (config/menu.php) selalu boleh, walau permission-nya
+     *   belum dibuat.
+     * - Selama tabel permission masih kosong (instalasi baru yang belum
+     *   di-seed), semua akses dibuka supaya user tidak terkunci.
+     * - Selain itu, accessor permission yang didaftarkan Spatie yang
+     *   menentukan, sehingga middleware "permission" dan sidebar selalu
+     *   memakai aturan yang sama.
+     */
+    private function registerMenuAccess(): void
+    {
+        Gate::before(function ($user, string $ability) {
+            if (! $user instanceof User) {
+                return null;
+            }
+
+            $menu = $this->app->make(Menu::class);
+
+            if ($menu->isSuperAdmin($user) || ! $menu->isConfigured()) {
+                return true;
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Siapkan menu sidebar yang sudah difilter sesuai hak akses user.
+     */
+    private function registerSidebarMenu(): void
+    {
+        View::composer('components.sidebar', function ($view) {
+            $view->with('menuTree', $this->app->make(Menu::class)->tree(request()->user()));
         });
     }
 }

@@ -99,22 +99,21 @@
 
                             <div class="form-group">
                                 <label class="form-label">Roles</label>
-                                <div class="selectgroup w-100">
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="admin" class="selectgroup-input"
-                                            checked="" {{ old('role') == 'admin' ? 'checked' : '' }}>
-                                        <span class="selectgroup-button">Admin</span>
-                                    </label>
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="staff" class="selectgroup-input" {{ old('role') == 'staff' ? 'checked' : '' }}>
-                                        <span class="selectgroup-button">Staff</span>
-                                    </label>
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="user" class="selectgroup-input" {{ old('role') == 'user' ? 'checked' : '' }}>
-                                        <span class="selectgroup-button">User</span>
-                                    </label>
-
-                                </div>
+                                <select name="role" class="form-control @error('role') is-invalid @enderror" required>
+                                    <option value="">-- Pilih Role --</option>
+                                    @foreach ($roles as $roleName)
+                                        <option value="{{ $roleName }}"
+                                            {{ old('role', 'admin') === $roleName ? 'selected' : '' }}>
+                                            {{ ucfirst($roleName) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('role')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <p class="text-muted" style="font-size: 13px;">
+                                    Role dibuat di menu <a href="{{ route('role.index') }}">Roles</a>.
+                                </p>
                             </div>
                         </div>
                         <div class="card-footer text-right">

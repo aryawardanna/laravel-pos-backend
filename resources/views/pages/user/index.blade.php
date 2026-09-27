@@ -36,9 +36,11 @@
                                 <div class="mb-3">
                                     <select id="filter-role" class="form-control mb-2 mr-3" style="width:auto; display:inline-block;">
                                         <option value="">-- Pilih Role --</option>
-                                        <option value="admin" {{ $role == 'admin' ? 'selected' : '' }}>Admin</option>
-                                        <option value="staff" {{ $role == 'staff' ? 'selected' : '' }}>Staff</option>
-                                        <option value="user" {{ $role == 'user' ? 'selected' : '' }}>User</option>
+                                        @foreach ($roles as $roleName)
+                                            <option value="{{ $roleName }}" {{ $role == $roleName ? 'selected' : '' }}>
+                                                {{ ucfirst($roleName) }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 

@@ -3,18 +3,49 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
+    public function __construct(protected Menu $menu) {}
+
+    /**
+     * Daftar role yang tersedia (dinamis, dari tabel roles).
+     */
+    private function availableRoles(): array
+    {
+        return Role::query()
+            ->where('guard_name', 'web')
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+    }
+
+    /**
+     * Role boleh dipilih pada form user.
+     */
+    private function roleRules(): array
+    {
+        return [
+            'required',
+            'string',
+            Rule::exists('roles', 'name')->where(fn ($query) => $query->where('guard_name', 'web')),
+        ];
+    }
+
     // index
     public function index()
     {
-        return view('pages.user.index');
+        return view('pages.user.index', [
+            'roles' => $this->availableRoles(),
+        ]);
     }
 
     public function data(Request $request)
@@ -38,13 +69,16 @@ class UserController extends Controller
             })
 
             ->editColumn('role', function (User $user) {
-                return match ($user->role) {
-                    'admin' => '<span class="badge badge-primary">admin</span>',
-                    'staff' => '<span class="badge badge-warning">staff</span>',
-                    default => '<span class="badge badge-secondary">'
-                        . e($user->role)
-                        . '</span>',
+                $role = (string) $user->role;
+
+                // Role bisa dinamis, warna mengikuti role bawaan yang sudah ada
+                $color = match ($role) {
+                    'admin' => 'primary',
+                    'staff' => 'warning',
+                    default => 'info',
                 };
+
+                return '<span class="badge badge-'.$color.'">'.e($role).'</span>';
             })
 
             ->addColumn('status', function (User $user) {
@@ -54,6 +88,7 @@ class UserController extends Controller
                 if ($user->status === 0) {
                     return '<span class="badge badge-danger">Nonactive</span>';
                 }
+
                 return '<span class="badge badge-secondary">Deleted</span>';
             })
 
@@ -64,15 +99,15 @@ class UserController extends Controller
             })
 
             ->addColumn('action', function (User $user) {
-                return '<a href="' . route('user.edit', $user->id) . '"
+                return '<a href="'.route('user.edit', $user->id).'"
                             class="btn btn-sm btn-info btn-icon">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <form action="' . route('user.destroy', $user->id) . '"
+                        <form action="'.route('user.destroy', $user->id).'"
                             method="POST"
                             class="d-inline ml-2 delete-form">
-                            ' . csrf_field() . '
-                            ' . method_field('DELETE') . '
+                            '.csrf_field().'
+                            '.method_field('DELETE').'
                             <button type="submit"
                                     class="btn btn-sm btn-danger btn-icon confirm-delete">
                                 <i class="fas fa-times"></i> Delete
@@ -87,7 +122,9 @@ class UserController extends Controller
     // create
     public function create()
     {
-        return view('pages.user.create');
+        return view('pages.user.create', [
+            'roles' => $this->availableRoles(),
+        ]);
     }
 
     // store
@@ -97,7 +134,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
-            'role' => ['required', 'string', 'in:admin,staff,user'],
+            'role' => $this->roleRules(),
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -106,7 +143,7 @@ class UserController extends Controller
         }
 
         // simpan data
-        $user = new User();
+        $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
@@ -115,6 +152,9 @@ class UserController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
+        // Samakan role Spatie dengan kolom role
+        $user->syncRoleFromColumn();
+
         return redirect()->route('user.index')->with('success', 'User created successfully');
     }
 
@@ -122,7 +162,7 @@ class UserController extends Controller
     public function show($id)
     {
         return view('pages.user.show', [
-            'user' => User::find($id)
+            'user' => User::find($id),
         ]);
     }
 
@@ -130,7 +170,18 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return view('pages.user.edit', compact('user'));
+        $roles = $this->availableRoles();
+
+        // Role milik user ini tetap selectable walau role-nya dihapus
+        if ($user->role && ! in_array($user->role, $roles, true)) {
+            $roles[] = $user->role;
+        }
+
+        return view('pages.user.edit', [
+            'user' => $user,
+            'roles' => $roles,
+            'menuModules' => $this->menu->modules(),
+        ]);
     }
 
     // update
@@ -140,7 +191,9 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
-            'role' => ['required', 'string', 'in:admin,staff,user'],
+            'role' => $this->roleRules(),
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string'],
         ]);
 
         if ($validator->fails()) {
@@ -161,6 +214,17 @@ class UserController extends Controller
             $user->save();
         }
 
+        // Role menentukan hak akses bawaan...
+        $user->syncRoleFromColumn();
+
+        // ...sedangkan daftar di bawah adalah akses menu tambahan untuk user ini.
+        $user->syncPermissions(
+            array_values(array_intersect(
+                (array) $request->input('permissions', []),
+                $this->menu->permissions()
+            ))
+        );
+
         return redirect()->route('user.index')->with('success', 'User updated successfully');
     }
 
@@ -171,8 +235,9 @@ class UserController extends Controller
         // update status -1
         User::find($id)->update([
             'status' => -1,
-            'updated_by' => Auth::user()->id
+            'updated_by' => Auth::user()->id,
         ]);
+
         return redirect()->route('user.index')->with('success', 'User deleted successfully');
     }
 }

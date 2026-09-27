@@ -79,24 +79,21 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Roles</label>
-                                <div class="selectgroup w-100">
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="admin" class="selectgroup-input"
-                                            @if ($user->role == 'admin') checked @endif>
-                                        <span class="selectgroup-button">Admin</span>
-                                    </label>
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="staff" class="selectgroup-input"
-                                            @if ($user->role == 'staff') checked @endif>
-                                        <span class="selectgroup-button">Staff</span>
-                                    </label>
-                                    <label class="selectgroup-item">
-                                        <input type="radio" name="role" value="user" class="selectgroup-input"
-                                            @if ($user->role == 'user') checked @endif>
-                                        <span class="selectgroup-button">User</span>
-                                    </label>
-
-                                </div>
+                                <select name="role" class="form-control @error('role') is-invalid @enderror" required>
+                                    @foreach ($roles as $roleName)
+                                        <option value="{{ $roleName }}" {{ $user->role === $roleName ? 'selected' : '' }}>
+                                            {{ ucfirst($roleName) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('role')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <p class="text-muted" style="font-size: 13px;">
+                                    Role dibuat di menu <a href="{{ route('role.index') }}">Roles</a>.
+                                    Hak akses mengikuti role ini, lihat menu <a
+                                        href="{{ route('menu-access.index') }}">Akses Menu</a>.
+                                </p>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Status</label>
@@ -111,6 +108,25 @@
                                             @if ($user->status == 0) checked @endif>
                                         <span class="selectgroup-button"><i class="fas fa-ban text-danger"></i> Nonactive</span>
                                     </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Akses Menu Tambahan</label>
+                                <p class="text-muted" style="font-size: 13px;">
+                                    Hak akses 기본 mengikuti role di atas. Centang menu di sini
+                                    untuk memberi akses tambahan khusus pada user ini.
+                                </p>
+                                <div class="row">
+                                    @foreach ($menuModules as $menuModule)
+                                        <div class="col-md-4 mb-2">
+                                            <label class="custom-control-label">
+                                                <input type="checkbox" class="checkbox" name="permissions[]"
+                                                    value="{{ $menuModule['key'] }}.view"
+                                                    @checked(in_array($menuModule['key'] . '.view', $user->getDirectPermissions()->pluck('name')->all(), true))>
+                                                {{ $menuModule['label'] }}
+                                            </label>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
