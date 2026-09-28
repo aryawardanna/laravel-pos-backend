@@ -80,7 +80,7 @@ class BahanBakuTest extends TestCase
         $this->actingAs($user)
             ->post(route('bahan_baku.store'), [
                 'name' => 'Kopi Biji Arabica',
-                'code' => 'KOPI',
+                // code tidak dikirim: dibuat otomatis oleh sistem (00001, 00002, ...)
                 'satuan_id' => $satuan->id,
                 'price' => '120000',
                 'stock' => '80',
@@ -93,14 +93,14 @@ class BahanBakuTest extends TestCase
 
         $this->assertDatabaseHas('bahan_bakus', [
             'name' => 'Kopi Biji Arabica',
-            'code' => 'KOPI',
+            'code' => '00001',   // kode pertama dibuat otomatis & unik
             'satuan_id' => $satuan->id,
             'status' => 1,
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ]);
 
-        $bahanBaku = BahanBaku::where('code', 'KOPI')->first();
+        $bahanBaku = BahanBaku::where('code', '00001')->first();
 
         // gambar harus didisk terterimpan di public/images/bahan_baku
         $storeImagePath = public_path('images/bahan_baku/' . $bahanBaku->image);
@@ -117,7 +117,6 @@ class BahanBakuTest extends TestCase
         $this->actingAs($user)
             ->put(route('bahan_baku.update', $bahanBaku->id), [
                 'name' => 'Kopi Biji Robusta',
-                'code' => 'KOPI-R',
                 'satuan_id' => $satuan->id,
                 'price' => '95000',
                 'stock' => '60',
@@ -131,6 +130,7 @@ class BahanBakuTest extends TestCase
         $this->assertDatabaseHas('bahan_bakus', [
             'id' => $bahanBaku->id,
             'name' => 'Kopi Biji Robusta',
+            'code' => '00001',   // kode bahan baku tidak ikut berubah
             'status' => 0,
             'updated_by' => $user->id,
         ]);
@@ -164,6 +164,54 @@ class BahanBakuTest extends TestCase
             ->get(route('bahan_baku.data'))
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_code_generated_sequential_unique_and_ignores_manual_input(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        // kode lama yang bukan angka (mis. hasil input manual) tidak mengganggu urutan kode baru
+        BahanBaku::create(['name' => 'Data Lama', 'code' => 'GULA', 'status' => 1]);
+
+        // form create menampilkan kode berikutnya yang akan dipakai
+        $this->actingAs($user)
+            ->get(route('bahan_baku.create'))
+            ->assertOk()
+            ->assertSee('00001');
+
+        foreach (['Pertama', 'Kedua', 'Ketiga'] as $name) {
+            $this->actingAs($user)
+                ->post(route('bahan_baku.store'), [
+                    'name' => $name,
+                    'price' => '1000',
+                    'min_stock' => '0',
+                    'status' => '1',
+                ])
+                ->assertRedirect(route('bahan_baku.index'));
+        }
+
+        $this->assertDatabaseHas('bahan_bakus', ['name' => 'Pertama', 'code' => '00001']);
+        $this->assertDatabaseHas('bahan_bakus', ['name' => 'Kedua', 'code' => '00002']);
+        $this->assertDatabaseHas('bahan_bakus', ['name' => 'Ketiga', 'code' => '00003']);
+
+        // kode yang dikirim dari form diabaikan: kode selalu dibuat oleh sistem
+        $this->actingAs($user)
+            ->post(route('bahan_baku.store'), [
+                'name' => 'Keempat',
+                'code' => 'BEBAS',
+                'price' => '1000',
+                'status' => '1',
+            ])
+            ->assertRedirect(route('bahan_baku.index'));
+
+        $this->assertDatabaseHas('bahan_bakus', ['name' => 'Keempat', 'code' => '00004']);
+
+        // seluruh kode bahan baku unik
+        $this->assertSame(
+            BahanBaku::count(),
+            BahanBaku::distinct()->count('code'),
+            'Kode bahan baku harus unik'
+        );
     }
 
     public function test_sidebar_highlights_bahan_baku_menu_on_subpages(): void

@@ -127,7 +127,8 @@ class BahanBakuController extends Controller
     public function create()
     {
         $satuans = Satuan::where('status', '!=', -1)->orderBy('name')->get();
-        return view('pages.bahan_baku.create', compact('satuans'));
+        $nextCode = BahanBaku::generateCode();
+        return view('pages.bahan_baku.create', compact('satuans', 'nextCode'));
     }
 
     /**
@@ -137,7 +138,6 @@ class BahanBakuController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50'],
             'satuan_id' => ['nullable', 'integer'],
             'price' => ['nullable', 'numeric'],
             'stock' => ['nullable', 'numeric'],
@@ -164,9 +164,9 @@ class BahanBakuController extends Controller
             $image->move(public_path('images/bahan_baku'), $imageName);
         }
 
+        // code tidak diisi manual: dibuat otomatis oleh model (urut & unik, mis. 00001)
         $bahanBaku = BahanBaku::create([
             'name' => $request->name,
-            'code' => $request->code,
             'satuan_id' => $request->satuan_id,
             'price' => StoreMoney($request->price) ?? 0,
             'stock' => 0,
@@ -206,7 +206,6 @@ class BahanBakuController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50'],
             'satuan_id' => ['nullable', 'integer'],
             'price' => ['nullable', 'numeric'],
             'stock' => ['nullable', 'numeric'],
@@ -241,9 +240,9 @@ class BahanBakuController extends Controller
             $image->move(public_path('images/bahan_baku'), $imageName);
         }
 
+        // code tidak ikut diubah: kode bahan baku bersifat unik & dibuat otomatis
         $bahanBaku->update([
             'name' => $request->name,
-            'code' => $request->code,
             'satuan_id' => $request->satuan_id,
             'price' => StoreMoney($request->price) ?? 0,
             'min_stock' => $request->min_stock ?? 0,

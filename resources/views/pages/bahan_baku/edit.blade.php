@@ -46,16 +46,10 @@
                             </div>
                             <div class="form-group">
                                 <label>Code</label>
-                                <input type="text"
-                                    class="form-control @error('code')
-                                is-invalid
-                            @enderror"
-                                    name="code" value="{{ $bahanBaku->code }}">
-                                @error('code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
+                                <input type="text" class="form-control" value="{{ $bahanBaku->code }}" readonly>
+                                <small class="form-text text-muted">
+                                    Kode dibuat otomatis oleh sistem dan tidak dapat diubah.
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label>Image</label>

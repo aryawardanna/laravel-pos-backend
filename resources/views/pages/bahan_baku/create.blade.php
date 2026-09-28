@@ -45,16 +45,10 @@
                             </div>
                             <div class="form-group">
                                 <label>Code</label>
-                                <input type="text"
-                                    class="form-control @error('code')
-                                is-invalid
-                            @enderror"
-                                    name="code" value="{{ old('code') }}" placeholder="e.g. GULA">
-                                @error('code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
+                                <input type="text" class="form-control" value="{{ $nextCode }}" readonly>
+                                <small class="form-text text-muted">
+                                    Kode dibuat otomatis oleh sistem, unik dan berurutan (5 digit, dimulai dari 00001).
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label>Image</label>

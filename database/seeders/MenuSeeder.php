@@ -16,7 +16,8 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         $categories = Category::get()->keyBy('name');
-        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('code');
+        // bahan baku di-key by name karena kode kini dibuat otomatis oleh sistem
+        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('name');
 
         $menus = [
             [
@@ -27,9 +28,9 @@ class MenuSeeder extends Seeder
                 'description' => 'Espresso dengan susu steam berlapis foam.',
                 'status' => 1,
                 'ingredients' => [
-                    ['bahan_baku_code' => 'KOPI', 'quantity' => 0.02],
-                    ['bahan_baku_code' => 'SUSU', 'quantity' => 0.25],
-                    ['bahan_baku_code' => 'GULA', 'quantity' => 0.03],
+                    ['bahan_baku_name' => 'Kopi Biji Arabica', 'quantity' => 0.02],
+                    ['bahan_baku_name' => 'Susu UHT', 'quantity' => 0.25],
+                    ['bahan_baku_name' => 'Gula Pasir', 'quantity' => 0.03],
                 ],
             ],
             [
@@ -40,8 +41,8 @@ class MenuSeeder extends Seeder
                 'description' => 'Espresso dengan susu steam ekstra.',
                 'status' => 1,
                 'ingredients' => [
-                    ['bahan_baku_code' => 'KOPI', 'quantity' => 0.03],
-                    ['bahan_baku_code' => 'SUSU', 'quantity' => 0.3],
+                    ['bahan_baku_name' => 'Kopi Biji Arabica', 'quantity' => 0.03],
+                    ['bahan_baku_name' => 'Susu UHT', 'quantity' => 0.3],
                 ],
             ],
             [
@@ -52,9 +53,9 @@ class MenuSeeder extends Seeder
                 'description' => 'Cappuccino dingin dalam cup kertas 12oz.',
                 'status' => 1,
                 'ingredients' => [
-                    ['bahan_baku_code' => 'CUP12', 'quantity' => 1],
-                    ['bahan_baku_code' => 'KOPI', 'quantity' => 0.02],
-                    ['bahan_baku_code' => 'SUSU', 'quantity' => 0.25],
+                    ['bahan_baku_name' => 'Cup Kertas 12oz', 'quantity' => 1],
+                    ['bahan_baku_name' => 'Kopi Biji Arabica', 'quantity' => 0.02],
+                    ['bahan_baku_name' => 'Susu UHT', 'quantity' => 0.25],
                 ],
             ],
         ];
@@ -76,7 +77,7 @@ class MenuSeeder extends Seeder
 
             $ingredients = [];
             foreach ($item['ingredients'] as $ingredient) {
-                $bahanBaku = $bahanBakus[$ingredient['bahan_baku_code']] ?? null;
+                $bahanBaku = $bahanBakus[$ingredient['bahan_baku_name']] ?? null;
                 if ($bahanBaku) {
                     $ingredients[$bahanBaku->id] = ['quantity' => $ingredient['quantity']];
                 }

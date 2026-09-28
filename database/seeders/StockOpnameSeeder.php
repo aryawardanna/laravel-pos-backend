@@ -24,7 +24,8 @@ class StockOpnameSeeder extends Seeder
      */
     public function run(): void
     {
-        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('code');
+        // bahan baku di-key by name karena kode kini dibuat otomatis oleh sistem
+        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('name');
         $userId = User::where('email', 'admin@example.com')->value('id') ?? User::value('id');
 
         $opnames = [
@@ -34,9 +35,9 @@ class StockOpnameSeeder extends Seeder
                 'status' => StockOpname::STATUS_FINAL,
                 'description' => 'Hitung fisik rutin bahan baku',
                 'items' => [
-                    ['code' => 'SUSU', 'difference' => -2, 'description' => 'Susu tumpah saat produksi'],
-                    ['code' => 'GULA', 'difference' => 3, 'description' => 'Kelebihan timbangan'],
-                    ['code' => 'CUP12', 'difference' => 0, 'description' => null],
+                    ['bahan_baku' => 'Susu UHT', 'difference' => -2, 'description' => 'Susu tumpah saat produksi'],
+                    ['bahan_baku' => 'Gula Pasir', 'difference' => 3, 'description' => 'Kelebihan timbangan'],
+                    ['bahan_baku' => 'Cup Kertas 12oz', 'difference' => 0, 'description' => null],
                 ],
             ],
             [
@@ -45,7 +46,7 @@ class StockOpnameSeeder extends Seeder
                 'status' => StockOpname::STATUS_DRAFT,
                 'description' => 'Draft opname kopi (belum diselesaikan)',
                 'items' => [
-                    ['code' => 'KOPI', 'difference' => -1, 'description' => 'Menunggu verifikasi ulang'],
+                    ['bahan_baku' => 'Kopi Biji Arabica', 'difference' => -1, 'description' => 'Menunggu verifikasi ulang'],
                 ],
             ],
         ];
@@ -65,7 +66,7 @@ class StockOpnameSeeder extends Seeder
             ]);
 
             foreach ($data['items'] as $row) {
-                $bahanBaku = $bahanBakus->get($row['code']);
+                $bahanBaku = $bahanBakus->get($row['bahan_baku']);
 
                 if (!$bahanBaku) {
                     continue;

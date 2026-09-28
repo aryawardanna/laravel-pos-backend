@@ -23,7 +23,8 @@ class PurchaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('code');
+        // bahan baku di-key by name karena kode kini dibuat otomatis oleh sistem
+        $bahanBakus = BahanBaku::where('status', '!=', -1)->get()->keyBy('name');
         $suppliers = Supplier::where('status', '!=', -1)->get()->keyBy('name');
         $userId = User::where('email', 'admin@example.com')->value('id') ?? User::value('id');
 
@@ -37,7 +38,7 @@ class PurchaseSeeder extends Seeder
                 'status' => Purchase::STATUS_RECEIVED,
                 'description' => 'Pembelian susu batch 1',
                 'items' => [
-                    ['code' => 'SUSU', 'quantity' => 10, 'unit_price' => 20000, 'expired_date' => '2026-10-30'],
+                    ['bahan_baku' => 'Susu UHT', 'quantity' => 10, 'unit_price' => 20000, 'expired_date' => '2026-10-30'],
                 ],
             ],
             [
@@ -47,7 +48,7 @@ class PurchaseSeeder extends Seeder
                 'status' => Purchase::STATUS_RECEIVED,
                 'description' => 'Pembelian susu batch 2',
                 'items' => [
-                    ['code' => 'SUSU', 'quantity' => 15, 'unit_price' => 22000, 'expired_date' => '2026-11-15'],
+                    ['bahan_baku' => 'Susu UHT', 'quantity' => 15, 'unit_price' => 22000, 'expired_date' => '2026-11-15'],
                 ],
             ],
             [
@@ -57,7 +58,7 @@ class PurchaseSeeder extends Seeder
                 'status' => Purchase::STATUS_RECEIVED,
                 'description' => 'Pembelian susu batch 3',
                 'items' => [
-                    ['code' => 'SUSU', 'quantity' => 20, 'unit_price' => 21000, 'expired_date' => '2026-12-20'],
+                    ['bahan_baku' => 'Susu UHT', 'quantity' => 20, 'unit_price' => 21000, 'expired_date' => '2026-12-20'],
                 ],
             ],
             [
@@ -67,8 +68,8 @@ class PurchaseSeeder extends Seeder
                 'status' => Purchase::STATUS_RECEIVED,
                 'description' => 'Pembelian gula pasir dan cup kertas',
                 'items' => [
-                    ['code' => 'GULA', 'quantity' => 25, 'unit_price' => 15500, 'expired_date' => '2027-06-30'],
-                    ['code' => 'CUP12', 'quantity' => 1000, 'unit_price' => 950, 'expired_date' => null],
+                    ['bahan_baku' => 'Gula Pasir', 'quantity' => 25, 'unit_price' => 15500, 'expired_date' => '2027-06-30'],
+                    ['bahan_baku' => 'Cup Kertas 12oz', 'quantity' => 1000, 'unit_price' => 950, 'expired_date' => null],
                 ],
             ],
             [
@@ -78,7 +79,7 @@ class PurchaseSeeder extends Seeder
                 'status' => Purchase::STATUS_DRAFT,
                 'description' => 'Draft pembelian kopi (belum diterima)',
                 'items' => [
-                    ['code' => 'KOPI', 'quantity' => 5, 'unit_price' => 125000, 'expired_date' => '2027-03-31'],
+                    ['bahan_baku' => 'Kopi Biji Arabica', 'quantity' => 5, 'unit_price' => 125000, 'expired_date' => '2027-03-31'],
                 ],
             ],
         ];
@@ -100,7 +101,7 @@ class PurchaseSeeder extends Seeder
             ]);
 
             foreach (array_values($data['items']) as $index => $item) {
-                $bahanBaku = $bahanBakus->get($item['code']);
+                $bahanBaku = $bahanBakus->get($item['bahan_baku']);
 
                 if (!$bahanBaku) {
                     continue;

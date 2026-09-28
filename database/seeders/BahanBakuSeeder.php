@@ -20,9 +20,10 @@ class BahanBakuSeeder extends Seeder
         }
 
         $bahanBakus = [
+            // Kode bahan baku tidak diisi manual di sini: model membuatnya otomatis
+            // secara unik & berurutan (00001, 00002, ...).
             [
                 'name' => 'Gula Pasir',
-                'code' => 'GULA',
                 'satuan_id' => $satuans['Kg'] ?? null,
                 'price' => 15000,
                 'stock' => 250,
@@ -32,7 +33,6 @@ class BahanBakuSeeder extends Seeder
             ],
             [
                 'name' => 'Kopi Biji Arabica',
-                'code' => 'KOPI',
                 'satuan_id' => $satuans['Kg'] ?? null,
                 'price' => 120000,
                 'stock' => 80,
@@ -42,7 +42,6 @@ class BahanBakuSeeder extends Seeder
             ],
             [
                 'name' => 'Susu UHT',
-                'code' => 'SUSU',
                 'satuan_id' => $satuans['Ltr'] ?? null,
                 'price' => 18000,
                 'stock' => 30,
@@ -52,7 +51,6 @@ class BahanBakuSeeder extends Seeder
             ],
             [
                 'name' => 'Cup Kertas 12oz',
-                'code' => 'CUP12',
                 'satuan_id' => $satuans['Pcs'] ?? null,
                 'price' => 900,
                 'stock' => 5000,
@@ -63,7 +61,7 @@ class BahanBakuSeeder extends Seeder
         ];
 
         foreach ($bahanBakus as $bahanBaku) {
-            $existing = BahanBaku::where('code', $bahanBaku['code'])->first();
+            $existing = BahanBaku::where('name', $bahanBaku['name'])->first();
             if ($existing) {
                 continue;
             }
