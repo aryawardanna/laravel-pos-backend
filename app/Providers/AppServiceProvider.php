@@ -65,6 +65,12 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
+            // Catat waktu login terakhir. Dipakai dropdown header pojok kanan
+            // untuk menampilkan "Logged in ... ago". Hanya diisi saat login
+            // dengan password, bukan saat sesi dipulihkan oleh Remember Me.
+            $user->last_login_at = now();
+            $user->save();
+
             return $user;
         });
     }

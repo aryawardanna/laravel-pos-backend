@@ -113,11 +113,30 @@ class SaleTest extends TestCase
         $bahanBaku = $this->makeBahanBaku(10);
         $menu = $this->makeMenu(25000, [[$bahanBaku, 0.25]]);
 
-        $this->actingAs($user)->get(route('sale.create'))
+        $html = $this->actingAs($user)->get(route('sale.create'))
             ->assertOk()
-            ->assertSee('Kasir / Transaksi Baru')
+            ->assertSee('TRANSAKSI')                 // app bar layar kasir
             ->assertSee('Kopi Susu')
-            ->assertSee('Sisa 40 porsi');
+            ->assertSee('Sisa 40')                   // sisa porsi hasil hitung resep
+            ->assertSee('Pesanan')                   // ringkasan jumlah pesanan
+            ->getContent();
+
+        // Struktur responsif: katalog menu + panel/sheet pesanan + baris menu valid.
+        $this->assertStringContainsString('class="kasir-frame"', $html);
+        $this->assertStringContainsString('class="kasir-body"', $html);
+        $this->assertStringContainsString('class="kasir-catalog"', $html);
+        $this->assertStringContainsString('id="cart-sheet"', $html);
+        $this->assertStringContainsString('id="kasir-list"', $html);
+        $this->assertMatchesRegularExpression('/data-id="'.$menu->id.'"/', $html);
+        $this->assertStringContainsString('kasir-sheet-close', $html);
+
+        // Keseimbangan tag <div> pada area kasir agar grid/flex tidak rusak.
+        $this->assertGreaterThan(0, substr_count($html, 'kasir-frame'));
+        $this->assertSame(
+            substr_count($html, '<div'),
+            substr_count($html, '</div>'),
+            'Jumlah tag <div> pembuka dan penutup halaman harus sama.'
+        );
 
         // API info menu: 10 liter / 0.25 per porsi = 40 porsi
         $this->actingAs($user)->get(route('sale.menu-info', $menu->id))
@@ -145,7 +164,7 @@ class SaleTest extends TestCase
 
         $sale = Sale::with('items')->first();
         $this->assertSame(Sale::STATUS_COMPLETED, (int) $sale->status);
-        $this->assertStringStartsWith('TRX-' . Carbon::today()->format('Ymd') . '-', $sale->code);
+        $this->assertStringStartsWith('TRX-'.Carbon::today()->format('Ymd').'-', $sale->code);
         $this->assertEquals(100000, (float) $sale->subtotal);
         $this->assertEquals(100000, (float) $sale->total);
         $this->assertEquals(400000, (float) $sale->change_amount);
@@ -366,7 +385,7 @@ class SaleTest extends TestCase
                 ->assertSee('images/menu/uji-menu.jpg');
 
             $this->assertStringContainsString(
-                'data-image="' . asset('images/menu/uji-menu.jpg') . '"',
+                'data-image="'.asset('images/menu/uji-menu.jpg').'"',
                 $response->getContent()
             );
         } finally {

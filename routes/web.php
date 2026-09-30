@@ -11,6 +11,7 @@ use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\MenuAccessController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SaleController;
@@ -58,6 +59,12 @@ Route::middleware(['auth', 'sync.role'])->group(function () use ($resource) {
     Route::get('home', [DashboardController::class, 'index'])
         ->name('home')
         ->middleware('permission:dashboard.view');
+
+    // Profil user yang sedang login (tanpa permission, hanya untuk dirinya sendiri)
+    Route::get('profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::put('profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
     // Akses menu: atur permission tiap role
     Route::get('menu-access', [MenuAccessController::class, 'index'])

@@ -35,7 +35,7 @@ class SaleController extends Controller
         $query = Sale::with(['creator', 'items'])->orderBy('id', 'desc');
 
         if ($request->filled('code')) {
-            $query->where('code', 'like', '%' . $request->input('code') . '%');
+            $query->where('code', 'like', '%'.$request->input('code').'%');
         }
         if ($request->filled('date_from')) {
             $query->whereDate('sale_date', '>=', $request->input('date_from'));
@@ -53,8 +53,9 @@ class SaleController extends Controller
             ->editColumn('sale_date', fn (Sale $s) => $s->sale_date ? $s->sale_date->format('d F Y') : '-')
             ->addColumn('item_count', function (Sale $s) {
                 $qty = $s->items->sum('quantity');
+
                 return $s->items->count() > 0
-                    ? '<span class="badge badge-info">' . $s->items->count() . ' Menu (' . FormatQty($qty) . ' porsi)</span>'
+                    ? '<span class="badge badge-info">'.$s->items->count().' Menu ('.FormatQty($qty).' porsi)</span>'
                     : '<span class="badge badge-secondary">0</span>';
             })
             ->editColumn('total', fn (Sale $s) => e(FormatMoney($s->total)))
@@ -66,13 +67,14 @@ class SaleController extends Controller
             })
             ->editColumn('created_by', fn (Sale $s) => $s->creator ? e($s->creator->name) : '-')
             ->addColumn('action', function (Sale $s) {
-                $a = '<a href="' . route('sale.show', $s->id) . '" class="btn btn-sm btn-info">Detail</a> ';
-                $a .= '<a href="' . route('sale.print', $s->id) . '" target="_blank" class="btn btn-sm btn-secondary">Cetak</a> ';
+                $a = '<a href="'.route('sale.show', $s->id).'" class="btn btn-sm btn-info">Detail</a> ';
+                $a .= '<a href="'.route('sale.print', $s->id).'" target="_blank" class="btn btn-sm btn-secondary">Cetak</a> ';
                 if ($s->isCompleted()) {
-                    $a .= '<form action="' . route('sale.destroy', $s->id) . '" method="POST" class="delete-form d-inline">'
-                        . csrf_field() . method_field('DELETE')
-                        . '<button type="submit" class="btn btn-sm btn-danger">Batalkan</button></form>';
+                    $a .= '<form action="'.route('sale.destroy', $s->id).'" method="POST" class="delete-form d-inline">'
+                        .csrf_field().method_field('DELETE')
+                        .'<button type="submit" class="btn btn-sm btn-danger">Batalkan</button></form>';
                 }
+
                 return $a;
             })
             ->rawColumns(['item_count', 'status', 'action'])
@@ -95,7 +97,10 @@ class SaleController extends Controller
             $stockInfo[$menu->id] = $this->menuAvailability($menu, $saleDate);
         }
 
-        return view('pages.sale.create', compact('menus', 'stockInfo', 'saleDate'));
+        // chip kategori pada layar kasir: hanya kategori yang dipakai menu aktif
+        $categories = $menus->pluck('category')->filter()->unique('id')->sortBy('name')->values();
+
+        return view('pages.sale.create', compact('menus', 'stockInfo', 'saleDate', 'categories'));
     }
 
     /**
@@ -194,7 +199,7 @@ class SaleController extends Controller
         // kasir bisa langsung diarahkan ke struk thermal setelah transaksi tersimpan
         if ($request->boolean('print_receipt')) {
             return redirect()->route('sale.print', $sale->id)
-                ->with('success', 'Transaksi ' . $sale->code . ' berhasil, stok bahan baku sudah dikurangi');
+                ->with('success', 'Transaksi '.$sale->code.' berhasil, stok bahan baku sudah dikurangi');
         }
 
         return redirect()->route('sale.show', $sale->id)->with('success', 'Transaksi berhasil, stok bahan baku sudah dikurangi');
@@ -229,7 +234,7 @@ class SaleController extends Controller
             'sale' => $sale,
             'paperWidth' => $paperWidth,
             'paperHeight' => $paperHeight,
-            'charsPerLine' => config('pos.chars_per_line.' . $paperWidth, 48),
+            'charsPerLine' => config('pos.chars_per_line.'.$paperWidth, 48),
             'autoPrint' => config('pos.thermal_auto_print', true),
         ]);
     }
@@ -272,7 +277,7 @@ class SaleController extends Controller
             $sale->update(['status' => Sale::STATUS_CANCELLED, 'updated_by' => Auth::user()->id]);
         });
 
-        return redirect()->route('sale.index')->with('success', 'Transaksi ' . $sale->code . ' dibatalkan, stok bahan baku dikembalikan ke batch semula');
+        return redirect()->route('sale.index')->with('success', 'Transaksi '.$sale->code.' dibatalkan, stok bahan baku dikembalikan ke batch semula');
     }
 
     protected function rules(): array
@@ -313,12 +318,13 @@ class SaleController extends Controller
                 continue;
             }
             $menu = $menus->get($menuId);
-            if (!$menu) {
+            if (! $menu) {
                 continue;
             }
             $price = (float) $menu->price;
             $rows[] = ['menu_id' => $menu->id, 'quantity' => $qty, 'unit_price' => $price, 'subtotal' => $qty * $price];
         }
+
         return $rows;
     }
 
@@ -327,7 +333,7 @@ class SaleController extends Controller
         $needs = [];
         foreach ($rows as $row) {
             $menu = $menus->get($row['menu_id']);
-            if (!$menu) {
+            if (! $menu) {
                 continue;
             }
             foreach ($menu->bahanBakus as $bahan) {
@@ -335,12 +341,13 @@ class SaleController extends Controller
                 if ($need <= 0) {
                     continue;
                 }
-                if (!isset($needs[$bahan->id])) {
+                if (! isset($needs[$bahan->id])) {
                     $needs[$bahan->id] = ['need' => 0, 'name' => $bahan->name];
                 }
                 $needs[$bahan->id]['need'] += $need;
             }
         }
+
         return $needs;
     }
 
@@ -355,7 +362,7 @@ class SaleController extends Controller
         foreach ($needs as $bahanId => $need) {
             $bahan = $stocks->get($bahanId);
 
-            if (!$bahan) {
+            if (! $bahan) {
                 throw new \RuntimeException('Bahan baku pada resep menu tidak ditemukan. Transaksi dibatalkan.');
             }
 
@@ -363,14 +370,14 @@ class SaleController extends Controller
 
             if ($available['available'] < $need['need'] - 1e-9) {
                 $note = $available['expired_batches'] > 0
-                    ? ' (' . $available['expired_batches'] . ' batch kedaluwarsa tidak dihitung)'
+                    ? ' ('.$available['expired_batches'].' batch kedaluwarsa tidak dihitung)'
                     : '';
 
                 throw new \RuntimeException(
-                    'Stok "' . $need['name'] . '" tidak cukup: butuh ' . FormatQty($need['need'])
-                    . ', layak dipakai ' . FormatQty($available['available'])
-                    . ' dari stok ' . FormatQty($bahan->stock) . $note
-                    . '. Kurangi jumlah menu atau tambah stok dulu.'
+                    'Stok "'.$need['name'].'" tidak cukup: butuh '.FormatQty($need['need'])
+                    .', layak dipakai '.FormatQty($available['available'])
+                    .' dari stok '.FormatQty($bahan->stock).$note
+                    .'. Kurangi jumlah menu atau tambah stok dulu.'
                 );
             }
         }
@@ -487,7 +494,7 @@ class SaleController extends Controller
 
         foreach ($sale->items as $saleItem) {
             $menu = $menus->get($saleItem->menu_id);
-            if (!$menu) {
+            if (! $menu) {
                 continue;
             }
             foreach ($menu->bahanBakus as $bahan) {
@@ -506,7 +513,7 @@ class SaleController extends Controller
         foreach ($demands as $bahanId => $lines) {
             $bahan = BahanBaku::lockForUpdate()->find($bahanId);
 
-            if (!$bahan) {
+            if (! $bahan) {
                 continue;
             }
 
@@ -560,7 +567,7 @@ class SaleController extends Controller
                         'balance' => $bahan->stock,
                         'unit_price' => $batch->unit_price,
                         'reference' => $sale->code,
-                        'description' => 'Penjualan ' . $sale->code . ' - ' . $line['menu_name'],
+                        'description' => 'Penjualan '.$sale->code.' - '.$line['menu_name'],
                         'created_by' => $userId,
                     ]);
 
@@ -569,8 +576,8 @@ class SaleController extends Controller
 
                 if ($remaining > 1e-9) {
                     throw new \RuntimeException(
-                        'Stok batch "' . $bahan->name . '" tidak mencukupi'
-                        . ' (batch kedaluwarsa tidak dipakai). Transaksi dibatalkan.'
+                        'Stok batch "'.$bahan->name.'" tidak mencukupi'
+                        .' (batch kedaluwarsa tidak dipakai). Transaksi dibatalkan.'
                     );
                 }
             }
@@ -610,7 +617,7 @@ class SaleController extends Controller
                     'balance' => $bahan->stock,
                     'unit_price' => $batch ? $batch->unit_price : 0,
                     'reference' => $sale->code,
-                    'description' => 'Pembatalan ' . $sale->code,
+                    'description' => 'Pembatalan '.$sale->code,
                     'created_by' => $userId,
                 ]);
             }
@@ -624,12 +631,13 @@ class SaleController extends Controller
     protected function generateCode(): string
     {
         $date = Carbon::today();
-        $prefix = 'TRX-' . $date->format('Ymd') . '-';
-        $last = Sale::where('code', 'like', $prefix . '%')->orderBy('id', 'desc')->first();
+        $prefix = 'TRX-'.$date->format('Ymd').'-';
+        $last = Sale::where('code', 'like', $prefix.'%')->orderBy('id', 'desc')->first();
         $next = 1;
         if ($last && preg_match('/(\d+)$/', $last->code, $m)) {
             $next = ((int) $m[1]) + 1;
         }
-        return $prefix . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+
+        return $prefix.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
     }
 }
