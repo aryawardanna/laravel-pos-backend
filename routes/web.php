@@ -19,9 +19,16 @@ use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    // User yang sudah login tidak perlu melihat form login lagi,
+    // langsung arahkan ke dashboard.
+    if (Auth::check()) {
+        return redirect()->route('home');
+    }
+
     return view('pages.auth.login');
 });
 
