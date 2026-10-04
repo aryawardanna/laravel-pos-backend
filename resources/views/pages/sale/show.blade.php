@@ -78,6 +78,10 @@
 
                                 <a href="{{ route('sale.print', $sale->id) }}" target="_blank"
                                     class="btn btn-primary">Cetak Struk</a>
+                                <a href="{{ route('sale.ticket', ['id' => $sale->id, 'part' => 'dapur']) }}" target="_blank"
+                                    class="btn btn-warning">Bon Dapur</a>
+                                <a href="{{ route('sale.ticket', ['id' => $sale->id, 'part' => 'bar']) }}" target="_blank"
+                                    class="btn btn-info">Bon Bar</a>
                                 <a href="{{ route('sale.index') }}" class="btn btn-secondary">Kembali</a>
 
                                 @if ($sale->isCompleted())

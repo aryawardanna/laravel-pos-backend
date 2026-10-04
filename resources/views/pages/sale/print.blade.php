@@ -3,9 +3,19 @@
     $storeAddress = config('pos.store_address');
     $storePhone = config('pos.store_phone');
     $otherPaper = $paperWidth === 80 ? 58 : 80;
-    $totalQty = $sale->items->sum('quantity');
     // tinggi cadangan bila JavaScript dimatikan (0 = tinggi mengikuti isi struk)
     $pageHeight = $paperHeight > 0 ? $paperHeight : 297;
+
+    // part=makanan|minuman -> struk hanya memuat satu jenis (opsi pecah struk).
+    $isSplit = in_array($part ?? null, ['makanan', 'minuman'], true);
+    $groupLabels = ['makanan' => 'MAKANAN', 'minuman' => 'MINUMAN', 'lainnya' => 'LAINNYA'];
+    $partTitle = $isSplit ? $groupLabels[$part] : null;
+
+    // grup yang ditampilkan: semua jenis (default) atau hanya jenis terpilih.
+    $visibleGroups = $isSplit ? [$part => $groups[$part] ?? collect()] : $groups;
+    $visibleItems = collect($visibleGroups)->flatten(1);
+    $visibleQty = $visibleItems->sum('quantity');
+    $visibleSubtotal = $visibleItems->sum('subtotal');
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -136,6 +146,11 @@
             font-weight: bold;
         }
 
+        .group-head {
+            margin: 4px 0 2px;
+            letter-spacing: 1px;
+        }
+
         .qty-line {
             font-size: 11px;
         }
@@ -194,6 +209,14 @@
         <a href="{{ route('sale.print', $sale->id) }}?paper={{ $otherPaper }}" class="btn btn-secondary">
             Kertas {{ $otherPaper }}mm
         </a>
+        @if (($groups['makanan'] ?? collect())->isNotEmpty())
+            <a href="{{ route('sale.print', ['id' => $sale->id, 'part' => 'makanan', 'paper' => $paperWidth]) }}" class="btn btn-secondary">Struk Makanan</a>
+            <a href="{{ route('sale.ticket', ['id' => $sale->id, 'part' => 'dapur', 'paper' => $paperWidth]) }}" target="_blank" class="btn btn-secondary">Bon Dapur</a>
+        @endif
+        @if (($groups['minuman'] ?? collect())->isNotEmpty())
+            <a href="{{ route('sale.print', ['id' => $sale->id, 'part' => 'minuman', 'paper' => $paperWidth]) }}" class="btn btn-secondary">Struk Minuman</a>
+            <a href="{{ route('sale.ticket', ['id' => $sale->id, 'part' => 'bar', 'paper' => $paperWidth]) }}" target="_blank" class="btn btn-secondary">Bon Bar</a>
+        @endif
         <a href="{{ route('sale.show', $sale->id) }}" class="btn btn-secondary">Detail</a>
         <a href="{{ route('sale.create') }}" class="btn btn-secondary">Transaksi Baru</a>
         <div class="hint">
@@ -250,56 +273,85 @@
 
         <div class="line"></div>
 
-        @forelse ($sale->items as $item)
-            <table>
-                <tr>
-                    <td class="item-name">{{ $item->menu?->name ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <td class="qty-line">{{ FormatQty($item->quantity) }} x {{ FormatMoney($item->unit_price) }}</td>
-                    <td class="right">{{ FormatMoney($item->subtotal) }}</td>
-                </tr>
-            </table>
-        @empty
+        @if ($isSplit)
+            <div class="center bold">STRUK {{ $partTitle }}</div>
+            <div class="line"></div>
+        @endif
+
+        @php $hasVisibleItem = false; @endphp
+        @foreach ($visibleGroups as $type => $items)
+            @if ($items->isNotEmpty())
+                @php $hasVisibleItem = true; @endphp
+                <div class="group-head center bold">{{ $groupLabels[$type] ?? strtoupper($type) }}</div>
+                @foreach ($items as $item)
+                    <table>
+                        <tr>
+                            <td class="item-name">{{ $item->menu?->name ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="qty-line">{{ FormatQty($item->quantity) }} x {{ FormatMoney($item->unit_price) }}</td>
+                            <td class="right">{{ FormatMoney($item->subtotal) }}</td>
+                        </tr>
+                    </table>
+                @endforeach
+            @endif
+        @endforeach
+
+        @if (! $hasVisibleItem)
             <div class="center muted">Tidak ada item.</div>
-        @endforelse
+        @endif
 
         <div class="line"></div>
 
         <table class="totals">
             <tr>
                 <td class="label">Jumlah Item</td>
-                <td class="right">{{ $sale->items->count() }} menu ({{ FormatQty($totalQty) }} porsi)</td>
+                <td class="right">{{ $visibleItems->count() }} menu ({{ FormatQty($visibleQty) }} porsi)</td>
             </tr>
-            <tr>
-                <td class="label">Subtotal</td>
-                <td class="right">{{ FormatMoney($sale->subtotal) }}</td>
-            </tr>
-            @if ((float) $sale->discount > 0)
+            @if ($isSplit)
                 <tr>
-                    <td class="label">Diskon</td>
-                    <td class="right">-{{ FormatMoney($sale->discount) }}</td>
+                    <td class="label">Subtotal {{ $partTitle }}</td>
+                    <td class="right">{{ FormatMoney($visibleSubtotal) }}</td>
+                </tr>
+            @else
+                <tr>
+                    <td class="label">Subtotal</td>
+                    <td class="right">{{ FormatMoney($sale->subtotal) }}</td>
+                </tr>
+                @if ((float) $sale->discount > 0)
+                    <tr>
+                        <td class="label">Diskon</td>
+                        <td class="right">-{{ FormatMoney($sale->discount) }}</td>
+                    </tr>
+                @endif
+                @if ((float) $sale->tax > 0)
+                    <tr>
+                        <td class="label">Pajak</td>
+                        <td class="right">{{ FormatMoney($sale->tax) }}</td>
+                    </tr>
+                @endif
+                <tr class="grand">
+                    <td class="label">TOTAL</td>
+                    <td class="right">{{ FormatMoney($sale->total) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Bayar ({{ strtoupper($sale->payment_method ?: 'cash') }})</td>
+                    <td class="right">{{ FormatMoney($sale->paid) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Kembali</td>
+                    <td class="right">{{ FormatMoney($sale->change_amount) }}</td>
                 </tr>
             @endif
-            @if ((float) $sale->tax > 0)
-                <tr>
-                    <td class="label">Pajak</td>
-                    <td class="right">{{ FormatMoney($sale->tax) }}</td>
-                </tr>
-            @endif
-            <tr class="grand">
-                <td class="label">TOTAL</td>
-                <td class="right">{{ FormatMoney($sale->total) }}</td>
-            </tr>
-            <tr>
-                <td class="label">Bayar ({{ strtoupper($sale->payment_method ?: 'cash') }})</td>
-                <td class="right">{{ FormatMoney($sale->paid) }}</td>
-            </tr>
-            <tr>
-                <td class="label">Kembali</td>
-                <td class="right">{{ FormatMoney($sale->change_amount) }}</td>
-            </tr>
         </table>
+
+        @if ($isSplit)
+            <div class="line"></div>
+            <div class="muted center">
+                Struk ini hanya memuat item {{ strtolower($partTitle) }}.<br>
+                Total transaksi (gabungan): {{ FormatMoney($sale->total) }}
+            </div>
+        @endif
 
         @if ($sale->description)
             <div class="line"></div>

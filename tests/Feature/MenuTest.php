@@ -221,8 +221,8 @@ class MenuTest extends TestCase
 
         preg_match('/<li class="active">\s*<a class="nav-link" href="([^"]*)"/', $html, $m);
 
-        $this->assertNotNull($m[1] ?? null, 'Tidak ditemukan menu sidebar aktif di: ' . $pageUrl);
-        $this->assertSame(route('menu.index'), $m[1], 'Menu aktif di sidebar bukan "Produk / Menu" untuk: ' . $pageUrl);
+        $this->assertNotNull($m[1] ?? null, 'Tidak ditemukan menu sidebar aktif di: '.$pageUrl);
+        $this->assertSame(route('menu.index'), $m[1], 'Menu aktif di sidebar bukan "Produk / Menu" untuk: '.$pageUrl);
     }
 
     public function test_menu_image_uses_default_when_empty_or_file_missing(): void
@@ -264,5 +264,62 @@ class MenuTest extends TestCase
         } finally {
             @unlink(public_path('images/menu/uji-menu.jpg'));
         }
+    }
+
+    public function test_menu_requires_category_on_store(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        // category_id kosong -> ditolak, menu tidak tersimpan
+        $this->actingAs($user)
+            ->post(route('menu.store'), [
+                'name' => 'Tanpa Kategori',
+                'price' => '10000',
+                'status' => '1',
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        $this->assertDatabaseMissing('menus', ['name' => 'Tanpa Kategori']);
+    }
+
+    public function test_menu_requires_valid_category_on_store(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        // category_id yang tidak ada di tabel categories -> ditolak
+        $this->actingAs($user)
+            ->post(route('menu.store'), [
+                'name' => 'Kategori Palsu',
+                'category_id' => '99999',
+                'price' => '10000',
+                'status' => '1',
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        $this->assertDatabaseMissing('menus', ['name' => 'Kategori Palsu']);
+    }
+
+    public function test_menu_requires_category_on_update(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+        $category = Category::create(['name' => 'Minuman']);
+        $menu = Menu::create([
+            'name' => 'Kopi Susu',
+            'code' => 'KS',
+            'category_id' => $category->id,
+            'price' => 20000,
+            'status' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('menu.update', $menu->id), [
+                'name' => 'Kopi Susu Gula Aren',
+                'price' => '22000',
+                'status' => '1',
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        // nama lama tetap, update tidak diterapkan
+        $this->assertSame('Kopi Susu', $menu->refresh()->name);
     }
 }

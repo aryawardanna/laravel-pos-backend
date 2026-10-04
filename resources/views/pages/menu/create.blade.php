@@ -57,8 +57,8 @@
                                 @enderror
                             </div>
                             <div class="form-group">
-                                <label>Category</label>
-                                <select name="category_id" class="form-control">
+                                <label>Category <span class="text-danger">*</span></label>
+                                <select name="category_id" class="form-control @error('category_id') is-invalid @enderror">
                                     <option value="">-- Pilih Kategori --</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -66,6 +66,11 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('category_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
                             <div class="form-group">
                                 <label>Price</label>

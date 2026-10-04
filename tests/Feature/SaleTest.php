@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BahanBaku;
+use App\Models\Category;
 use App\Models\Menu;
 use App\Models\PurchaseItem;
 use App\Models\Sale;
@@ -47,11 +48,12 @@ class SaleTest extends TestCase
     /**
      * Menu dengan resep: tiap baris resep = [bahan baku, qty per porsi].
      */
-    private function makeMenu(float $price, array $recipes, string $name = 'Kopi Susu'): Menu
+    private function makeMenu(float $price, array $recipes, string $name = 'Kopi Susu', ?Category $category = null): Menu
     {
         $menu = Menu::create([
             'name' => $name,
             'code' => 'KS',
+            'category_id' => $category?->id,
             'price' => $price,
             'status' => 1,
         ]);
@@ -61,6 +63,36 @@ class SaleTest extends TestCase
         }
 
         return $menu;
+    }
+
+    /**
+     * Buat satu transaksi dengan dua menu: satu makanan & satu minuman.
+     *
+     * @return array{0: User, 1: Sale}
+     */
+    private function makeMixedSale(): array
+    {
+        $user = $this->makeUser();
+        $bahanBaku = $this->makeBahanBaku(0);
+        $this->receivePurchase($user, $bahanBaku, '10', Carbon::today()->addDays(30)->toDateString());
+
+        $makanan = Category::create(['name' => 'Makanan', 'type' => Category::TYPE_MAKANAN, 'status' => 1]);
+        $minuman = Category::create(['name' => 'Minuman', 'type' => Category::TYPE_MINUMAN, 'status' => 1]);
+
+        $nasiGoreng = $this->makeMenu(30000, [[$bahanBaku, 0.2]], 'Nasi Goreng', $makanan);
+        $kopiSusu = $this->makeMenu(25000, [[$bahanBaku, 0.1]], 'Kopi Susu', $minuman);
+
+        $this->actingAs($user)->post(route('sale.store'), [
+            'sale_date' => Carbon::today()->toDateString(),
+            'menu_id' => [$nasiGoreng->id, $kopiSusu->id],
+            'quantity' => ['1', '2'],
+            'discount' => '0',
+            'tax' => '0',
+            'paid' => '500000',
+            'payment_method' => 'cash',
+        ])->assertSessionHas('success');
+
+        return [$user, Sale::first()];
     }
 
     /**
@@ -490,5 +522,71 @@ class SaleTest extends TestCase
         $this->assertEqualsWithDelta(0.5, (float) $batch->remaining_qty, 0.0005);
         $this->assertEqualsWithDelta(0.5, (float) $bahanBaku->refresh()->stock, 0.0005);
         $this->assertBatchTotalEqualsStock($bahanBaku);
+    }
+
+    public function test_receipt_groups_items_by_category_type(): void
+    {
+        [$user, $sale] = $this->makeMixedSale();
+
+        $this->actingAs($user)->get(route('sale.print', $sale->id))
+            ->assertOk()
+            ->assertSee('MAKANAN')
+            ->assertSee('MINUMAN')
+            ->assertSee('Nasi Goreng')
+            ->assertSee('Kopi Susu')
+            // tombol bon dapur & bar muncul karena kedua jenis ada
+            ->assertSee(route('sale.ticket', ['id' => $sale->id, 'part' => 'dapur']))
+            ->assertSee(route('sale.ticket', ['id' => $sale->id, 'part' => 'bar']));
+    }
+
+    public function test_receipt_can_be_split_into_food_and_drink_parts(): void
+    {
+        [$user, $sale] = $this->makeMixedSale();
+
+        $this->actingAs($user)->get(route('sale.print', ['id' => $sale->id, 'part' => 'makanan']))
+            ->assertOk()
+            ->assertSee('STRUK MAKANAN')
+            ->assertSee('Nasi Goreng')
+            ->assertDontSee('Kopi Susu');
+
+        $this->actingAs($user)->get(route('sale.print', ['id' => $sale->id, 'part' => 'minuman']))
+            ->assertOk()
+            ->assertSee('STRUK MINUMAN')
+            ->assertSee('Kopi Susu')
+            ->assertDontSee('Nasi Goreng');
+    }
+
+    public function test_kitchen_and_bar_tickets_filter_items_without_prices(): void
+    {
+        [$user, $sale] = $this->makeMixedSale();
+
+        // bon dapur: hanya makanan, tanpa harga
+        $this->actingAs($user)->get(route('sale.ticket', ['id' => $sale->id, 'part' => 'dapur']))
+            ->assertOk()
+            ->assertSee('BON DAPUR')
+            ->assertSee('Nasi Goreng')
+            ->assertDontSee('Kopi Susu')
+            ->assertDontSee('30.000,00');
+
+        // bon bar: hanya minuman, tanpa harga
+        $this->actingAs($user)->get(route('sale.ticket', ['id' => $sale->id, 'part' => 'bar']))
+            ->assertOk()
+            ->assertSee('BON BAR')
+            ->assertSee('Kopi Susu')
+            ->assertDontSee('Nasi Goreng')
+            ->assertDontSee('25.000,00');
+    }
+
+    public function test_sale_action_links_include_kitchen_and_bar_tickets(): void
+    {
+        [$user, $sale] = $this->makeMixedSale();
+
+        $action = json_decode(
+            $this->actingAs($user)->get(route('sale.data'))->assertOk()->getContent(),
+            true
+        )['data'][0]['action'];
+
+        $this->assertStringContainsString(route('sale.ticket', ['id' => $sale->id, 'part' => 'dapur']), $action);
+        $this->assertStringContainsString(route('sale.ticket', ['id' => $sale->id, 'part' => 'bar']), $action);
     }
 }

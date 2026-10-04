@@ -41,4 +41,15 @@ return [
         80 => 48,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Label Bon Dapur / Bar
+    |--------------------------------------------------------------------------
+    | Judul yang dicetak pada bon dapur (kategori makanan) dan bon bar
+    | (kategori minuman).
+    */
+
+    'kitchen_label' => env('POS_KITCHEN_LABEL', 'DAPUR'),
+    'bar_label' => env('POS_BAR_LABEL', 'BAR'),
+
 ];

@@ -37,6 +37,7 @@
                                                 <th>Name</th>
                                                 <th>Description</th>
                                                 <th>Image</th>
+                                                <th>Jenis</th>
                                                 <th>Status</th>
                                                 <th>Created By</th>
                                                 <th>Updated By</th>
@@ -94,6 +95,12 @@
                     {
                         data: 'image',
                         name: 'image',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'type',
+                        name: 'type',
                         orderable: false,
                         searchable: false
                     },

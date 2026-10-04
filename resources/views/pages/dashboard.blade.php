@@ -379,6 +379,20 @@
 <script src="{{ asset('library/chart.js/dist/Chart.min.js') }}"></script>
 <script>
 $(function () {
+    /* Chart dibuat setelah CSS/padding kolom final (requestAnimationFrame ganda)
+       supaya tinggi pembungkus .dash-chart (flex column) sudah terukur — kalau
+       dibuat terlalu awal, tinggi terukur 0 dan grafik tampil kosong sampai
+       ada interaksi (mis. klik legenda). */
+    function gambarSaatSiap(gambarFn) {
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(gambarFn);
+            });
+        } else {
+            setTimeout(gambarFn, 50);
+        }
+    }
+
     // Warna & opsi dasar yang dipakai semua grafik.
     var WARNA = { indigo: '#6777ef', hijau: '#47c363', oranye: '#ffa426', merah: '#fc544b', biru: '#3abaf4', ungu: '#9c6ade' };
     var legendaBawah = {
@@ -440,42 +454,54 @@ $(function () {
         jedaResize = setTimeout(terapkanUkuranSumbu, 200);
     });
 
-    // 1. Tren 14 hari: omzet (garis) vs jumlah transaksi (batang)
-    var tren = document.getElementById('chart-tren');
-    if (tren) {
-        var chartTren = new Chart(tren, {
-            data: {
-                labels: {!! json_encode($trenLabels) !!},
-                datasets: [
-                    {
-                        type: 'line', label: 'Omzet', yAxisID: 'y',
-                        data: {!! json_encode($trenOmzet) !!},
-                        borderColor: WARNA.indigo, backgroundColor: 'rgba(103,119,239,.12)',
-                        fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 6, borderWidth: 3
-                    },
-                    {
-                        type: 'bar', label: 'Transaksi', yAxisID: 'y1',
-                        data: {!! json_encode($trenTrx) !!},
-                        backgroundColor: 'rgba(71,195,99,.75)', borderRadius: 4, barPercentage: 0.6
+    // 1. Tren 14 hari: omzet (garis) vs belanja bahan (batang).
+    // Dataset "Transaksi" dihapus karena skalanya (satuan) tidak sebanding
+    // dengan omzet (rupiah) dan sulurnya menempel nol sehingga grafik
+    // terlihat kosong tanpa batang yang tampil.
+    function gambarTren() {
+        var tren = document.getElementById('chart-tren');
+        if (tren) {
+            var chartTren = new Chart(tren, {
+                // type top-level dipakai Chart.js 2.x sebagai dasar grafik campuran.
+                type: 'bar',
+                data: {
+                    labels: {!! json_encode($trenLabels) !!},
+                    datasets: [
+                        {
+                            type: 'bar', label: 'Belanja bahan', yAxisID: 'y',
+                            data: {!! json_encode($trenBelanja) !!},
+                            backgroundColor: 'rgba(255,164,38,.8)', borderRadius: 4, barPercentage: 0.6
+                        },
+                        {
+                            type: 'line', label: 'Omzet', yAxisID: 'y',
+                            data: {!! json_encode($trenOmzet) !!},
+                            borderColor: WARNA.indigo, backgroundColor: 'rgba(103,119,239,.12)',
+                            fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 6, borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    legend: legendaBawah, tooltips: tooltipRupiah,
+                    scales: {
+                        // Satu skala rupiah dipakai bersama agar garis omzet dan
+                        // batang belanja benar-benar sebanding satu sama lain.
+                        yAxes: [
+                            { position: 'left', id: 'y', gridLines: { color: '#eef1f7', drawBorder: false }, ticks: { fontColor: '#99a4c2', beginAtZero: true, callback: function (n) { return n >= 1000000 ? (n / 1000000).toFixed(1).replace('.0', '') + ' jt' : (n >= 1000 ? Math.round(n / 1000) + ' rb' : n); } } }
+                        ],
+                        xAxes: [sumbuXAdaptif(14)]
                     }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                legend: legendaBawah, tooltips: tooltipRupiah,
-                scales: {
-                    yAxes: [
-                        { position: 'left', id: 'y', gridLines: { color: '#eef1f7', drawBorder: false }, ticks: { fontColor: '#99a4c2', callback: function (n) { return n >= 1000000 ? (n / 1000000).toFixed(1).replace('.0', '') + ' jt' : (n >= 1000 ? Math.round(n / 1000) + ' rb' : n); } } },
-                        { position: 'right', id: 'y1', gridLines: { display: false }, ticks: { fontColor: '#99a4c2', precision: 0, beginAtZero: true } }
-                    ],
-                    xAxes: [sumbuXAdaptif(14)]
                 }
-            }
-        });
+            });
 
-        daftarChart(chartTren, 14);
+            daftarChart(chartTren, 14);
+        }
     }
 
+    /* Grafik selain tren dibuat di dalam fungsi ini, dipanggil lewat
+       gambarSaatSiap (setelah layout final) supaya kanvas tidak terukur 0
+       dan langsung tergambar tanpa perlu klik legenda. */
+    function gambarSemuaGrafik() {
     // 2. Metode pembayaran (30 hari)
     var bayar = document.getElementById('chart-bayar');
     if (bayar) {
@@ -623,9 +649,31 @@ $(function () {
 
         daftarChart(chartJam, 14);
     }
+    } // akhir gambarSemuaGrafik()
 
-    // Terapkan ulang batas tick untuk ukuran layar saat ini.
-    terapkanUkuranSumbu();
+    /* Paksa resize + update semua chart. Dipakai setelah layout final dan
+       saat window load, supaya kanvas yang sempat terukur 0 langsung benar
+       tanpa perlu klik legenda. */
+    function gambarUlangSemua() {
+        Object.keys(Chart.instances || {}).forEach(function (id) {
+            var c = Chart.instances[id];
+            if (c && typeof c.resize === 'function') { c.resize(); }
+            if (c && typeof c.update === 'function') { c.update(); }
+        });
+        terapkanUkuranSumbu();
+    }
+
+    /* Gambar semua chart setelah layout final, lalu update sekali lagi saat
+       seluruh aset selesai dimuat, supaya kanvas tidak terukur 0 di awal. */
+    gambarSaatSiap(function () {
+        gambarSemuaGrafik();
+        gambarTren();
+        gambarUlangSemua();
+    });
+
+    $(window).on('load', function () {
+        gambarUlangSemua();
+    });
 });
 </script>
 @endpush

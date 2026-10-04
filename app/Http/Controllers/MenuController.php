@@ -20,7 +20,7 @@ class MenuController extends Controller
     public function index(Request $request)
     {
         $menus = Menu::when($request->input('name'), function ($query, $name) {
-            $query->where('name', 'like', '%' . $name . '%');
+            $query->where('name', 'like', '%'.$name.'%');
         })->orderBy('id', 'desc')->paginate(10);
 
         return view('pages.menu.index', compact('menus'));
@@ -46,7 +46,7 @@ class MenuController extends Controller
 
             // Image (memakai gambar default bila menu belum punya gambar)
             ->editColumn('image', function (Menu $menu) {
-                return '<img src="' . e(MenuImageUrl($menu)) . '"
+                return '<img src="'.e(MenuImageUrl($menu)).'"
                             width="50"
                             height="50"
                             style="object-fit: cover; border-radius: 5px;"
@@ -63,8 +63,9 @@ class MenuController extends Controller
 
             ->editColumn('bahan_baku_count', function (Menu $menu) {
                 $total = $menu->bahanBakus->count();
+
                 return $total > 0
-                    ? '<span class="badge badge-info">' . $total . ' Bahan Baku</span>'
+                    ? '<span class="badge badge-info">'.$total.' Bahan Baku</span>'
                     : '<span class="badge badge-secondary">0</span>';
             })
 
@@ -90,15 +91,15 @@ class MenuController extends Controller
 
             // Action
             ->addColumn('action', function (Menu $menu) {
-                return '<a href="' . route('menu.edit', $menu->id) . '"
+                return '<a href="'.route('menu.edit', $menu->id).'"
                             class="btn btn-sm btn-info btn-icon">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <form action="' . route('menu.destroy', $menu->id) . '"
+                        <form action="'.route('menu.destroy', $menu->id).'"
                             method="POST"
                             class="d-inline ml-2 delete-form">
-                            ' . csrf_field() . '
-                            ' . method_field('DELETE') . '
+                            '.csrf_field().'
+                            '.method_field('DELETE').'
                             <button type="submit"
                                     class="btn btn-sm btn-danger btn-icon confirm-delete">
                                 <i class="fas fa-times"></i> Delete
@@ -141,6 +142,7 @@ class MenuController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         $bahanBakus = BahanBaku::with('satuan')->where('status', '!=', -1)->orderBy('name')->get();
+
         return view('pages.menu.create', compact('categories', 'bahanBakus'));
     }
 
@@ -152,7 +154,7 @@ class MenuController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:50'],
-            'category_id' => ['nullable', 'integer'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
             'price' => ['nullable', 'numeric'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
@@ -172,7 +174,7 @@ class MenuController extends Controller
         $imageName = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '-' . Str::random(6) . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'-'.Str::random(6).'.'.$image->getClientOriginalExtension();
             $image->move(public_path('images/menu'), $imageName);
         }
 
@@ -210,6 +212,7 @@ class MenuController extends Controller
         $menu = Menu::with(['bahanBakus.satuan'])->findOrFail($id);
         $categories = Category::orderBy('name')->get();
         $bahanBakus = BahanBaku::with('satuan')->where('status', '!=', -1)->orderBy('name')->get();
+
         return view('pages.menu.edit', compact('menu', 'categories', 'bahanBakus'));
     }
 
@@ -221,7 +224,7 @@ class MenuController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:50'],
-            'category_id' => ['nullable', 'integer'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
             'price' => ['nullable', 'numeric'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
@@ -243,13 +246,13 @@ class MenuController extends Controller
         $imageName = $menu->image;
         if ($request->hasFile('image')) {
             if ($menu->image) {
-                $imagePath = public_path('images/menu/' . $menu->image);
+                $imagePath = public_path('images/menu/'.$menu->image);
                 if (File::exists($imagePath)) {
                     File::delete($imagePath);
                 }
             }
             $image = $request->file('image');
-            $imageName = time() . '-' . Str::random(6) . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'-'.Str::random(6).'.'.$image->getClientOriginalExtension();
             $image->move(public_path('images/menu'), $imageName);
         }
 
@@ -279,6 +282,7 @@ class MenuController extends Controller
             'status' => -1,
             'updated_by' => Auth::user()->id,
         ]);
+
         return redirect()->route('menu.index')->with('success', 'Menu deleted successfully');
     }
 }

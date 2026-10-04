@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use File;
 use Yajra\DataTables\Facades\DataTables;
 
 class CategoryController extends Controller
@@ -20,7 +20,6 @@ class CategoryController extends Controller
     {
         return view('pages.category.index');
     }
-
 
     public function data(Request $request)
     {
@@ -70,9 +69,9 @@ class CategoryController extends Controller
                 // Jika hanya nama file, gunakan folder images/category.
                 $imageUrl = filter_var($category->image, FILTER_VALIDATE_URL)
                     ? $category->image
-                    : asset('images/category/' . $category->image);
+                    : asset('images/category/'.$category->image);
 
-                return '<img src="' . e($imageUrl) . '"
+                return '<img src="'.e($imageUrl).'"
                             width="50"
                             height="50"
                             style="object-fit: cover; border-radius: 5px;"
@@ -86,6 +85,22 @@ class CategoryController extends Controller
                 return (int) $status === 1
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-secondary">Inactive</span>';
+            })
+
+            ->addColumn('type', function (Category $category) {
+                if (! Schema::hasColumn('categories', 'type')) {
+                    return '-';
+                }
+
+                $type = $category->getAttribute('type') ?: Category::TYPE_LAINNYA;
+                $label = Category::types()[$type] ?? ucfirst($type);
+
+                $badge = [
+                    Category::TYPE_MAKANAN => 'badge-danger',
+                    Category::TYPE_MINUMAN => 'badge-info',
+                ][$type] ?? 'badge-secondary';
+
+                return '<span class="badge '.$badge.'">'.e($label).'</span>';
             })
 
             ->addColumn('created_by', function (Category $category) use ($hasCreatedBy) {
@@ -112,15 +127,15 @@ class CategoryController extends Controller
 
             // Action
             ->addColumn('action', function (Category $category) {
-                return '<a href="' . route('category.edit', $category->id) . '"
+                return '<a href="'.route('category.edit', $category->id).'"
                             class="btn btn-sm btn-info btn-icon">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <form action="' . route('category.destroy', $category->id) . '"
+                        <form action="'.route('category.destroy', $category->id).'"
                             method="POST"
                             class="d-inline ml-2 delete-form">
-                            ' . csrf_field() . '
-                            ' . method_field('DELETE') . '
+                            '.csrf_field().'
+                            '.method_field('DELETE').'
                             <button type="submit"
                                     class="btn btn-sm btn-danger btn-icon confirm-delete">
                                 <i class="fas fa-times"></i> Delete
@@ -129,7 +144,7 @@ class CategoryController extends Controller
             })
 
             // Izinkan HTML hanya untuk kolom image, status, dan action
-            ->rawColumns(['image', 'status', 'action'])
+            ->rawColumns(['image', 'status', 'type', 'action'])
             ->toJson();
     }
 
@@ -149,6 +164,7 @@ class CategoryController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'type' => ['nullable', 'in:makanan,minuman,lainnya'],
             'status' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
@@ -161,7 +177,7 @@ class CategoryController extends Controller
         $imageName = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'.'.$image->getClientOriginalExtension();
             $image->move(public_path('images/category'), $imageName);
         }
 
@@ -170,6 +186,10 @@ class CategoryController extends Controller
             'description' => $request->description,
             'image' => $imageName,
         ];
+
+        if (Schema::hasColumn('categories', 'type')) {
+            $data['type'] = $request->input('type', Category::TYPE_LAINNYA);
+        }
 
         if (Schema::hasColumn('categories', 'created_by')) {
             $data['created_by'] = Auth::user()->id;
@@ -201,6 +221,7 @@ class CategoryController extends Controller
     public function edit(string $id)
     {
         $category = Category::findOrFail($id);
+
         return view('pages.category.edit', compact('category'));
     }
 
@@ -212,6 +233,7 @@ class CategoryController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'type' => ['nullable', 'in:makanan,minuman,lainnya'],
             'status' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
@@ -227,13 +249,13 @@ class CategoryController extends Controller
         if ($request->hasFile('image')) {
             // delete image old
             if ($category->image) {
-                $imagePath = public_path('images/category/' . $category->image);
+                $imagePath = public_path('images/category/'.$category->image);
                 if (File::exists($imagePath)) {
                     File::delete($imagePath);
                 }
             }
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'.'.$image->getClientOriginalExtension();
             $image->move(public_path('images/category'), $imageName);
         }
 
@@ -242,6 +264,10 @@ class CategoryController extends Controller
             'description' => $request->description,
             'image' => $imageName,
         ];
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'type')) {
+            $data['type'] = $request->input('type', $category->getAttribute('type') ?: Category::TYPE_LAINNYA);
+        }
 
         if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'updated_by')) {
             $data['updated_by'] = Auth::user()->id;
@@ -265,7 +291,7 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         if ($category->image) {
 
-            $imagePath = public_path('images/category/' . $category->image);
+            $imagePath = public_path('images/category/'.$category->image);
             if (File::exists($imagePath)) {
                 File::delete($imagePath);
             }

@@ -290,6 +290,47 @@ class DashboardTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_grafik_tren_punya_type_top_level(): void
+    {
+        $this->isiSemuaGrafik();
+        $html = $this->isiHalaman();
+
+        // Chart.js 2.x membaca type top-level konfigurasi. Tanpanya grafik
+        // tren tidak tergambar saat halaman dimuat (kosong sampai di-klik).
+        $this->assertMatchesRegularExpression(
+            "/var\\s+chartTren\\s*=\\s*new\\s+Chart\\s*\\(\\s*tren,\\s*\\{[^}]*type:\\s*'(bar|line)'/s",
+            $html,
+            'Konfigurasi chart-tren harus menyertakan type top-level agar tergambar saat halaman dimuat.'
+        );
+
+        // Dataset harus memplot data tren sesuai judul & keterangan kartu:
+        // garis Omzet dan batang Belanja bahan (bukan Transaksi satuan).
+        $this->assertStringContainsString('Belanja bahan', $html);
+        $this->assertDoesNotMatchRegularExpression(
+            "/new\\s+Chart\\s*\\(\\s*tren,[\\s\\S]*?label:\\s*'Transaksi'/",
+            $html,
+            'Dataset Transaksi (satuan) tidak boleh dipetakan ke skala rupiah chart-tren.'
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            "/new\\s+Chart\\s*\\(\\s*tren,[\\s\\S]*?yAxisID:\\s*'y1'/",
+            $html,
+            'chart-tren harus memakai satu skala rupiah (sumbu y tunggal).'
+        );
+    }
+
+    public function test_grafik_digambar_setelah_layout_siap(): void
+    {
+        $this->isiSemuaGrafik();
+        $html = $this->isiHalaman();
+
+        // Chart dibuat lewat penunda (rAF) dan di-update lagi saat load,
+        // supaya grafik langsung tampil tanpa perlu klik legenda.
+        $this->assertStringContainsString('gambarSaatSiap', $html);
+        $this->assertStringContainsString('requestAnimationFrame', $html);
+        $this->assertStringContainsString("on('load'", $html);
+        $this->assertStringContainsString('gambarUlangSemua', $html);
+    }
+
     private function isiHalaman(): string
     {
         return $this->actingAs($this->admin())

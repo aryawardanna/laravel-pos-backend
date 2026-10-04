@@ -137,6 +137,10 @@ Route::middleware(['auth', 'sync.role'])->group(function () use ($resource) {
     Route::get('sale/{id}/print', [SaleController::class, 'printReceipt'])
         ->name('sale.print')
         ->middleware('permission:sale.view');
+    // Bon dapur (makanan) / bar (minuman) tanpa harga
+    Route::get('sale/{id}/ticket', [SaleController::class, 'printTicket'])
+        ->name('sale.ticket')
+        ->middleware('permission:sale.view');
     $resource('sale', SaleController::class, 'sale', ['index', 'create', 'store', 'show', 'destroy']);
 
     // Pembelian bahan baku (setiap baris = satu batch/lot)

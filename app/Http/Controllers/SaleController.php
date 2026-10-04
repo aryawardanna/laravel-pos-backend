@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BahanBaku;
+use App\Models\Category;
 use App\Models\Menu;
 use App\Models\PurchaseItem;
 use App\Models\Sale;
@@ -69,6 +70,8 @@ class SaleController extends Controller
             ->addColumn('action', function (Sale $s) {
                 $a = '<a href="'.route('sale.show', $s->id).'" class="btn btn-sm btn-info">Detail</a> ';
                 $a .= '<a href="'.route('sale.print', $s->id).'" target="_blank" class="btn btn-sm btn-secondary">Cetak</a> ';
+                $a .= '<a href="'.route('sale.ticket', ['id' => $s->id, 'part' => 'dapur']).'" target="_blank" class="btn btn-sm btn-secondary">Bon Dapur</a> ';
+                $a .= '<a href="'.route('sale.ticket', ['id' => $s->id, 'part' => 'bar']).'" target="_blank" class="btn btn-sm btn-secondary">Bon Bar</a> ';
                 if ($s->isCompleted()) {
                     $a .= '<form action="'.route('sale.destroy', $s->id).'" method="POST" class="delete-form d-inline">'
                         .csrf_field().method_field('DELETE')
@@ -225,18 +228,77 @@ class SaleController extends Controller
      */
     public function printReceipt(Request $request, string $id)
     {
-        $sale = Sale::with(['items.menu', 'usages.bahanBaku.satuan', 'creator'])->findOrFail($id);
+        $sale = Sale::with(['items.menu.category', 'usages.bahanBaku.satuan', 'creator'])->findOrFail($id);
+
+        // part=makanan|minuman -> struk hanya memuat item jenis tersebut
+        $part = in_array($request->input('part'), ['makanan', 'minuman'], true)
+            ? $request->input('part')
+            : null;
 
         $paperWidth = $this->paperWidth($request);
         $paperHeight = $this->paperHeight($request);
 
         return view('pages.sale.print', [
             'sale' => $sale,
+            'groups' => $this->groupItemsByType($sale),
+            'part' => $part,
             'paperWidth' => $paperWidth,
             'paperHeight' => $paperHeight,
             'charsPerLine' => config('pos.chars_per_line.'.$paperWidth, 48),
             'autoPrint' => config('pos.thermal_auto_print', true),
         ]);
+    }
+
+    /**
+     * Bon dapur / bar: tiket tanpa harga, satu jenis item per halaman.
+     *
+     * part=dapur -> semua item kategori "makanan"
+     * part=bar   -> semua item kategori "minuman"
+     */
+    public function printTicket(Request $request, string $id)
+    {
+        $sale = Sale::with(['items.menu.category', 'creator'])->findOrFail($id);
+
+        $part = $request->input('part') === 'bar' ? 'bar' : 'dapur';
+
+        $paperWidth = $this->paperWidth($request);
+        $paperHeight = $this->paperHeight($request);
+
+        return view('pages.sale.ticket', [
+            'sale' => $sale,
+            'groups' => $this->groupItemsByType($sale),
+            'part' => $part,
+            'paperWidth' => $paperWidth,
+            'paperHeight' => $paperHeight,
+            'charsPerLine' => config('pos.chars_per_line.'.$paperWidth, 48),
+            'autoPrint' => config('pos.thermal_auto_print', true),
+        ]);
+    }
+
+    /**
+     * Kelompokkan item penjualan menurut jenis kategorinya.
+     *
+     * @return array<string, \Illuminate\Support\Collection<int, \App\Models\SaleItem>>
+     */
+    protected function groupItemsByType(Sale $sale): array
+    {
+        $groups = [
+            Category::TYPE_MAKANAN => collect(),
+            Category::TYPE_MINUMAN => collect(),
+            Category::TYPE_LAINNYA => collect(),
+        ];
+
+        foreach ($sale->items as $item) {
+            $type = $item->menu?->category?->type ?: Category::TYPE_LAINNYA;
+
+            if (! array_key_exists($type, $groups)) {
+                $type = Category::TYPE_LAINNYA;
+            }
+
+            $groups[$type]->push($item);
+        }
+
+        return $groups;
     }
 
     /**

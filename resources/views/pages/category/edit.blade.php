@@ -66,6 +66,29 @@
                                 </div>
                             @endif
                             <div class="form-group">
+                                <label class="form-label">Jenis</label>
+                                <div class="selectgroup w-100">
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="type" value="makanan" class="selectgroup-input"
+                                            @if(old('type', $category->type ?? 'lainnya') == 'makanan') checked @endif>
+                                        <span class="selectgroup-button">Makanan</span>
+                                    </label>
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="type" value="minuman" class="selectgroup-input"
+                                            @if(old('type', $category->type ?? 'lainnya') == 'minuman') checked @endif>
+                                        <span class="selectgroup-button">Minuman</span>
+                                    </label>
+                                    <label class="selectgroup-item">
+                                        <input type="radio" name="type" value="lainnya" class="selectgroup-input"
+                                            @if(old('type', $category->type ?? 'lainnya') == 'lainnya') checked @endif>
+                                        <span class="selectgroup-button">Lainnya</span>
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Menentukan pemisahan cetak: Makanan -> Bon Dapur, Minuman -> Bon Bar.
+                                </small>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label">Status</label>
                                 <div class="selectgroup w-100">
                                     <label class="selectgroup-item">
