@@ -16,6 +16,33 @@ Route::post('/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout
 Route::post('/logout-all', [\App\Http\Controllers\Api\AuthController::class, 'logoutAll'])
     ->middleware('auth:sanctum');
 
+// Menu API
+Route::prefix('menus')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\MenuController::class, 'index'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.index');
+
+    Route::get('/{id}', [App\Http\Controllers\Api\MenuController::class, 'show'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.show');
+
+    Route::post('/', [App\Http\Controllers\Api\MenuController::class, 'store'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.store');
+
+    Route::put('/{id}', [App\Http\Controllers\Api\MenuController::class, 'update'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.update');
+
+    Route::patch('/{id}', [App\Http\Controllers\Api\MenuController::class, 'update'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.update.patch');
+
+    Route::delete('/{id}', [App\Http\Controllers\Api\MenuController::class, 'destroy'])
+        ->middleware('auth:sanctum')
+        ->name('api.menu.destroy');
+});
+
 // Bahan baku API
 Route::prefix('bahan-baku')->group(function () {
     Route::get('/', [App\Http\Controllers\Api\BahanBakuController::class, 'index'])
