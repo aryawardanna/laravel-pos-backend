@@ -88,3 +88,26 @@ Route::prefix('categories')->group(function () {
         ->middleware('auth:sanctum')
         ->name('api.category.destroy');
 });
+
+// Transaksi Penjualan API
+Route::prefix('sales')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\SaleController::class, 'index'])
+        ->middleware('auth:sanctum')
+        ->name('api.sale.index');
+
+    Route::post('/', [App\Http\Controllers\Api\SaleController::class, 'store'])
+        ->middleware('auth:sanctum')
+        ->name('api.sale.store');
+
+    Route::get('/{id}', [App\Http\Controllers\Api\SaleController::class, 'show'])
+        ->middleware('auth:sanctum')
+        ->name('api.sale.show');
+
+    Route::delete('/{id}', [App\Http\Controllers\Api\SaleController::class, 'destroy'])
+        ->middleware('auth:sanctum')
+        ->name('api.sale.destroy');
+
+    Route::get('/menu-info/{id}', [App\Http\Controllers\Api\SaleController::class, 'menuInfo'])
+        ->middleware('auth:sanctum')
+        ->name('api.sale.menu-info');
+});
